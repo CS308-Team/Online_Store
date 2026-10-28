@@ -38,3 +38,13 @@ def get_product(product_id: int):
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
+
+@app.get("/categories")
+def list_categories():
+    connection = get_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM categories ORDER BY id ASC")
+        categories = cursor.fetchall()
+    connection.close()
+    return categories
+
