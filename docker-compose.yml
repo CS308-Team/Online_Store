@@ -1,0 +1,16 @@
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: store
+      MYSQL_USER: store
+      MYSQL_PASSWORD: store
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d
+
+volumes:
+  mysql_data:
