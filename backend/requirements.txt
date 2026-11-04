@@ -3,6 +3,6 @@ uvicorn
 pymysql
 cryptography
 pytest 
-httpx2
+httpx
 bcrypt 
 pydantic[email]
