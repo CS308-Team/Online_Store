@@ -6,8 +6,8 @@ import { apiRequest } from "./client";
 export async function searchProducts(query) {
   const q = query.trim();
   const products = await apiRequest(`/products?search=${encodeURIComponent(q)}`);
-  const needle = q.toLocaleLowerCase("tr-TR");
+  const needle = q.toLowerCase();
   return products.filter((p) =>
-    `${p.name} ${p.description ?? ""}`.toLocaleLowerCase("tr-TR").includes(needle)
+    `${p.name} ${p.description ?? ""}`.toLowerCase().includes(needle)
   );
 }

@@ -8,10 +8,10 @@ export const ROLE_HOME = {
 };
 
 export const ROLE_LABEL = {
-  "Customer": "Müşteri",
-  "Sales Manager": "Satış yöneticisi",
-  "Product Manager": "Ürün yöneticisi",
-  "Support Agent": "Destek temsilcisi",
+  "Customer": "Customer",
+  "Sales Manager": "Sales manager",
+  "Product Manager": "Product manager",
+  "Support Agent": "Support agent",
 };
 
 export const homePathFor = (role) => ROLE_HOME[role] ?? "/";

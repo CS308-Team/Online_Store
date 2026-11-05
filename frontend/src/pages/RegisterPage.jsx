@@ -51,45 +51,45 @@ export default function RegisterPage() {
     } catch (err) {
       setLoading(false);
       if (err.status === 409) {
-        setErrors({ email: "Bu e-posta ile kayıtlı bir hesap var." });
+        setErrors({ email: "An account with this e-mail already exists." });
       } else if (err.status === 422) {
         setErrors(mapServerErrors(err.detail));
-        setFormError("Bazı bilgiler kabul edilmedi. İşaretli alanları kontrol et.");
+        setFormError("Some details were not accepted. Check the highlighted fields.");
       } else if (err.status === 0) {
         setFormError(err.message);
       } else {
-        setFormError("Kayıt sırasında bir sorun oluştu. Biraz sonra tekrar dene.");
+        setFormError("Something went wrong while signing up. Please try again later.");
       }
     }
   };
 
-  if (loading) return <VinylLoader label="Hesap oluşturuluyor…" />;
+  if (loading) return <VinylLoader label="Creating account…" />;
 
   const field = (id) => ({ id, value: values[id], onChange: update(id), onBlur: blur(id), error: errors[id] });
 
   return (
     <section className="page">
       <form className="form-card form-card-wide" onSubmit={submit} noValidate>
-        <span className="mono-xs">Yeni hesap</span>
-        <h2 className="form-title">Kayıt ol</h2>
+        <span className="mono-xs">New account</span>
+        <h2 className="form-title">Sign up</h2>
 
         {formError && <p className="form-alert" role="alert">{formError}</p>}
 
-        <FormField label="Ad soyad" autoComplete="name" {...field("name")} />
-        <FormField label="Vergi no / T.C. kimlik no" inputMode="numeric" maxLength={11}
-                   hint="Faturalarında bu numara yer alır." {...field("taxId")} />
-        <FormField label="E-posta" type="email" autoComplete="email" {...field("email")} />
-        <FormField label="Ev adresi" as="textarea" rows={3} autoComplete="street-address"
+        <FormField label="Full name" autoComplete="name" {...field("name")} />
+        <FormField label="Tax ID" inputMode="numeric" maxLength={11}
+                   hint="10 or 11 digits. Shown on your invoices." {...field("taxId")} />
+        <FormField label="E-mail" type="email" autoComplete="email" {...field("email")} />
+        <FormField label="Home address" as="textarea" rows={3} autoComplete="street-address"
                    {...field("homeAddress")} />
-        <FormField label="Şifre" type="password" autoComplete="new-password"
-                   hint="En az 8 karakter." {...field("password")} />
-        <FormField label="Şifre (tekrar)" type="password" autoComplete="new-password"
+        <FormField label="Password" type="password" autoComplete="new-password"
+                   hint="At least 8 characters." {...field("password")} />
+        <FormField label="Confirm password" type="password" autoComplete="new-password"
                    {...field("passwordConfirm")} />
 
-        <button type="submit" className="btn btn-block">Kayıt ol</button>
+        <button type="submit" className="btn btn-block">Sign up</button>
         <hr className="divider" />
-        <span className="muted">Hesabın var mı? </span>
-        <Link to="/login" className="link">Giriş yap</Link>
+        <span className="muted">Already have an account? </span>
+        <Link to="/login" className="link">Log in</Link>
       </form>
     </section>
   );

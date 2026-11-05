@@ -23,7 +23,7 @@ export default function SearchPage() {
       .catch((err) => {
         if (latestQuery.current === query) setResult({
           query, products: [],
-          error: err.status === 0 ? err.message : "Arama sırasında bir sorun oluştu. Biraz sonra tekrar dene.",
+          error: err.status === 0 ? err.message : "Something went wrong while searching. Please try again later.",
         });
       });
   }, [query]);
@@ -31,14 +31,14 @@ export default function SearchPage() {
   if (!query) {
     return (
       <section className="page page-message">
-        <span className="mono-xs">Arama</span>
-        <h2 className="form-title">Ne arıyorsun?</h2>
-        <p>Yukarıdaki kutuya bir albüm, sanatçı ya da ürün adı yaz.</p>
+        <span className="mono-xs">Search</span>
+        <h2 className="form-title">What are you looking for?</h2>
+        <p>Type an album, artist or product name in the box above.</p>
       </section>
     );
   }
 
-  if (result.query !== query) return <VinylLoader label="Aranıyor…" />;
+  if (result.query !== query) return <VinylLoader label="Searching…" />;
 
   if (result.error) {
     return <section className="page page-message error" role="alert">{result.error}</section>;
@@ -48,19 +48,19 @@ export default function SearchPage() {
   return (
     <section className="page">
       <div className="section-head">
-        <h2>“{query}” için sonuçlar</h2>
-        <span className="mono-xs" role="status">{count} ürün</span>
+        <h2>Results for “{query}”</h2>
+        <span className="mono-xs" role="status">{count} {count === 1 ? "product" : "products"}</span>
       </div>
 
       {count === 0 ? (
         <div className="card empty-state">
-          <span className="mono-xs">Sonuç yok</span>
-          <h3>“{query}” ile eşleşen bir ürün bulamadık.</h3>
+          <span className="mono-xs">No results</span>
+          <h3>We couldn’t find any products matching “{query}”.</h3>
           <ul className="muted empty-tips">
-            <li>Yazımı kontrol et ya da daha kısa bir kelime dene.</li>
-            <li>Sanatçı yerine albüm adıyla, ürün yerine marka adıyla ara.</li>
+            <li>Check the spelling or try a shorter word.</li>
+            <li>Search by album name instead of artist, or by brand instead of product.</li>
           </ul>
-          <Link to="/" className="btn btn-ghost">Ana sayfaya dön</Link>
+          <Link to="/" className="btn btn-ghost">Back to home</Link>
         </div>
       ) : (
         <div className="product-grid">

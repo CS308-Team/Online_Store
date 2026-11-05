@@ -21,22 +21,22 @@ export default function Header() {
   return (
     <header className="site-header">
       <div className="site-header-inner">
-        <Link to={auth ? homePathFor(auth.role) : "/"} className="brand" aria-label="Kozalak ana sayfa">
+        <Link to={auth ? homePathFor(auth.role) : "/"} className="brand" aria-label="Kozalak home">
           <img src={wordmarkUrl} alt="Kozalak" className="brand-wordmark" />
         </Link>
 
         <SearchBar key={urlQuery} initialQuery={urlQuery} />
 
-        <nav className="header-actions" aria-label="Hesap">
+        <nav className="header-actions" aria-label="Account">
           {auth ? (
             <>
               <span className="mono-xs header-role">{ROLE_LABEL[auth.role] ?? auth.role}</span>
-              <button type="button" className="link" onClick={handleLogout}>Çıkış yap</button>
+              <button type="button" className="link" onClick={handleLogout}>Log out</button>
             </>
           ) : (
             <>
-              <Link to="/login" className="link">Giriş yap</Link>
-              <Link to="/register" className="btn btn-sm">Kayıt ol</Link>
+              <Link to="/login" className="link">Log in</Link>
+              <Link to="/register" className="btn btn-sm">Sign up</Link>
             </>
           )}
         </nav>

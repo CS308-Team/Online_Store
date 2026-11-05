@@ -1,6 +1,6 @@
 # Kozalak — Frontend
 
-React + Vite. Tasarım dili: Kozalak stil paketi (`src/styles`, `src/components/VinylLoader|StarRating|RecordArt.jsx`, `src/assets/brand`).
+React + Vite. Arayüz dili **İngilizce** (`<html lang="en">`); fiyatlar `₺1,250.50` biçiminde (`utils/format.js`). Tasarım dili: Kozalak stil paketi (`src/styles`, `src/components/VinylLoader|StarRating|RecordArt.jsx`, `src/assets/brand`).
 
 ## Çalıştırma
 
@@ -23,7 +23,7 @@ src/
   components/   Header, SearchBar, ProductCard, FormField + stil paketi bileşenleri
   pages/        HomePage, LoginPage, RegisterPage, SearchPage, RoleHomePage, NotFoundPage
   styles/       tokens.css, base.css, components.css (stil paketi) + app.css (uygulamaya özel)
-  utils/        validation.js, format.js (₺ fiyat formatı)
+  utils/        validation.js, format.js (₺ fiyat formatı, en-US)
 ```
 
 ## Sprint 1 — tamamlanan işler

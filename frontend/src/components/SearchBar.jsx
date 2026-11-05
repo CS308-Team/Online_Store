@@ -19,19 +19,19 @@ export default function SearchBar({ initialQuery = "" }) {
 
   return (
     <form className="search-bar" role="search" onSubmit={submit}>
-      <label htmlFor="site-search" className="visually-hidden">Ürün ara</label>
+      <label htmlFor="site-search" className="visually-hidden">Search products</label>
       <input
         ref={inputRef}
         id="site-search"
         type="search"
         className="input search-input"
-        placeholder="Albüm, sanatçı ya da ürün ara"
+        placeholder="Search albums, artists or products"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         autoComplete="off"
         maxLength={100}
       />
-      <button type="submit" className="btn btn-sm search-button">Ara</button>
+      <button type="submit" className="btn btn-sm search-button">Search</button>
     </form>
   );
 }

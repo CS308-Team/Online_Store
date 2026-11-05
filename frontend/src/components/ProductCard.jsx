@@ -15,8 +15,8 @@ export default function ProductCard({ product }) {
         <div className="product-card-meta">
           <span className="product-card-price">{formatPrice(product.price)}</span>
           {stock > 0
-            ? <span className="mono-xs text-ok">Stokta: {stock}</span>
-            : <span className="mono-xs text-danger">Stokta yok</span>}
+            ? <span className="mono-xs text-ok">In stock: {stock}</span>
+            : <span className="mono-xs text-danger">Out of stock</span>}
         </div>
       </div>
     </Link>

@@ -3,9 +3,9 @@
 export default function HomePage() {
   return (
     <section className="page">
-      <span className="mono-xs">Kozalak plak dükkânı</span>
-      <h1 className="hero-title">Pikap, <em className="highlight">plak</em> ve dinleme ekipmanı.</h1>
-      <p className="muted hero-text">Aradığın albümü ya da cihazı yukarıdaki arama çubuğundan bul.</p>
+      <span className="mono-xs">Kozalak record store</span>
+      <h1 className="hero-title">Turntables, <em className="highlight">records</em> and listening gear.</h1>
+      <p className="muted hero-text">Find the album or device you want with the search bar above.</p>
     </section>
   );
 }

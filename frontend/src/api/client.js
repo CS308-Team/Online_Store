@@ -23,7 +23,7 @@ export async function apiRequest(path, { method = "GET", body, token } = {}) {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw new ApiError(0, "Sunucuya ulaşılamadı. İnternet bağlantını kontrol et.");
+    throw new ApiError(0, "Could not reach the server. Check your internet connection.");
   }
 
   const data = await response.json().catch(() => null);

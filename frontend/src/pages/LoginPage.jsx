@@ -45,36 +45,36 @@ export default function LoginPage() {
     } catch (err) {
       setLoading(false);
       setValues((prev) => ({ ...prev, password: "" }));
-      if (err.status === 401) setFormError("E-posta veya şifre hatalı.");
-      else if (err.status === 422) setFormError("Geçerli bir e-posta adresi gir.");
+      if (err.status === 401) setFormError("Incorrect e-mail or password.");
+      else if (err.status === 422) setFormError("Enter a valid e-mail address.");
       else if (err.status === 0) setFormError(err.message);
-      else setFormError("Giriş sırasında bir sorun oluştu. Biraz sonra tekrar dene.");
+      else setFormError("Something went wrong while logging in. Please try again later.");
     }
   };
 
-  if (loading) return <VinylLoader label="Giriş yapılıyor…" />;
+  if (loading) return <VinylLoader label="Logging in…" />;
 
   return (
     <section className="page">
       <form className="form-card" onSubmit={submit} noValidate>
-        <span className="mono-xs">Hesabın var mı?</span>
-        <h2 className="form-title">Giriş yap</h2>
+        <span className="mono-xs">Welcome back</span>
+        <h2 className="form-title">Log in</h2>
 
         {registeredEmail && !formError && (
-          <p className="form-notice" role="status">Hesabın oluşturuldu. Şimdi giriş yapabilirsin.</p>
+          <p className="form-notice" role="status">Your account has been created. You can log in now.</p>
         )}
         {formError && <p className="form-alert" role="alert">{formError}</p>}
 
-        <FormField id="email" label="E-posta" type="email" autoComplete="email"
+        <FormField id="email" label="E-mail" type="email" autoComplete="email"
                    value={values.email} onChange={update("email")} error={errors.email} />
-        <FormField id="password" label="Şifre" type="password" autoComplete="current-password"
+        <FormField id="password" label="Password" type="password" autoComplete="current-password"
                    autoFocus={Boolean(registeredEmail)}
                    value={values.password} onChange={update("password")} error={errors.password} />
 
-        <button type="submit" className="btn btn-block">Giriş yap</button>
+        <button type="submit" className="btn btn-block">Log in</button>
         <hr className="divider" />
-        <span className="muted">Hesabın yok mu? </span>
-        <Link to="/register" className="link">Kayıt ol</Link>
+        <span className="muted">No account yet? </span>
+        <Link to="/register" className="link">Sign up</Link>
       </form>
     </section>
   );

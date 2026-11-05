@@ -6,8 +6,8 @@ const byteLength = (s) => new TextEncoder().encode(s).length;
 
 export function validateEmail(email) {
   const v = email.trim();
-  if (!v) return "E-posta adresini gir.";
-  if (!EMAIL_RE.test(v)) return "Geçerli bir e-posta adresi gir.";
+  if (!v) return "Enter your e-mail address.";
+  if (!EMAIL_RE.test(v)) return "Enter a valid e-mail address.";
   return "";
 }
 
@@ -17,26 +17,26 @@ export function validateRegister(values) {
   const taxId = values.taxId.trim();
   const address = values.homeAddress.trim();
 
-  if (!name) errors.name = "Ad soyad gir.";
-  else if (name.length < 2) errors.name = "Ad soyad en az 2 karakter olmalı.";
-  else if (name.length > 200) errors.name = "Ad soyad en fazla 200 karakter olabilir.";
+  if (!name) errors.name = "Enter your full name.";
+  else if (name.length < 2) errors.name = "Name must be at least 2 characters.";
+  else if (name.length > 200) errors.name = "Name can be at most 200 characters.";
 
-  if (!taxId) errors.taxId = "Vergi numarası veya T.C. kimlik numarası gir.";
-  else if (!/^\d+$/.test(taxId)) errors.taxId = "Sadece rakam girilebilir.";
-  else if (taxId.length < 10 || taxId.length > 11) errors.taxId = "10 haneli vergi no veya 11 haneli T.C. kimlik no gir.";
+  if (!taxId) errors.taxId = "Enter your tax ID.";
+  else if (!/^\d+$/.test(taxId)) errors.taxId = "Use digits only.";
+  else if (taxId.length < 10 || taxId.length > 11) errors.taxId = "Tax ID must be 10 or 11 digits.";
 
   const emailError = validateEmail(values.email);
   if (emailError) errors.email = emailError;
 
-  if (!address) errors.homeAddress = "Ev adresini gir.";
-  else if (address.length < 5) errors.homeAddress = "Adres en az 5 karakter olmalı.";
+  if (!address) errors.homeAddress = "Enter your home address.";
+  else if (address.length < 5) errors.homeAddress = "Address must be at least 5 characters.";
 
-  if (!values.password) errors.password = "Şifre belirle.";
-  else if (values.password.length < 8) errors.password = "En az 8 karakter olmalı.";
-  else if (byteLength(values.password) > 72) errors.password = "Şifre çok uzun (en fazla 72 bayt).";
+  if (!values.password) errors.password = "Choose a password.";
+  else if (values.password.length < 8) errors.password = "Must be at least 8 characters.";
+  else if (byteLength(values.password) > 72) errors.password = "Password is too long (max 72 bytes).";
 
-  if (!values.passwordConfirm) errors.passwordConfirm = "Şifreyi tekrar gir.";
-  else if (values.password !== values.passwordConfirm) errors.passwordConfirm = "Şifreler eşleşmiyor.";
+  if (!values.passwordConfirm) errors.passwordConfirm = "Re-enter your password.";
+  else if (values.password !== values.passwordConfirm) errors.passwordConfirm = "Passwords do not match.";
 
   return errors;
 }
@@ -45,7 +45,7 @@ export function validateLogin(values) {
   const errors = {};
   const emailError = validateEmail(values.email);
   if (emailError) errors.email = emailError;
-  if (!values.password) errors.password = "Şifreni gir.";
+  if (!values.password) errors.password = "Enter your password.";
   return errors;
 }
 
@@ -56,7 +56,7 @@ export function mapServerErrors(detail) {
   const errors = {};
   for (const item of detail) {
     const field = FIELD_MAP[item?.loc?.[item.loc.length - 1]];
-    if (field && !errors[field]) errors[field] = "Bu alan sunucu tarafından kabul edilmedi.";
+    if (field && !errors[field]) errors[field] = "The server did not accept this value.";
   }
   return errors;
 }

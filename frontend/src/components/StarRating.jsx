@@ -7,7 +7,7 @@ export default function StarRating({ value = 0, count, max = 5 }) {
   const stars = "★".repeat(max);
 
   return (
-    <div className="star-rating" aria-label={`${rating.toFixed(1)} / ${max} puan`}>
+    <div className="star-rating" aria-label={`Rated ${rating.toFixed(1)} out of ${max}`}>
       <span className="stars" aria-hidden="true">
         <span className="stars-empty">{stars}</span>
         <span className="stars-full" style={{ width: `${percent}%` }}>{stars}</span>
