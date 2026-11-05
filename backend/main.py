@@ -29,26 +29,41 @@ def get_connection():
 def home():
     return {"message": "Hello from the online store!"}
 
+# ORDER BY cannot use SQL parameters, so only these fixed strings may reach the query.
+# products.id is the tie-breaker that keeps equal prices/sales in a stable order.
+SORT_OPTIONS = {
+    "price_asc": "products.price ASC, products.id ASC",
+    "price_desc": "products.price DESC, products.id ASC",
+    "popularity": "products.sold_count DESC, products.id ASC",
+}
+DEFAULT_ORDER = "products.id ASC"
+
+
 @app.get("/products")
-def list_products(category_name: str | None = None):
+def list_products(category_name: str | None = None, sort: str | None = None):
+    if sort is not None and sort not in SORT_OPTIONS:
+        allowed = ", ".join(SORT_OPTIONS)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid sort option. Allowed values: {allowed}",
+        )
+
+    order_by = SORT_OPTIONS[sort] if sort is not None else DEFAULT_ORDER
+
+    query = (
+        "SELECT products.*, categories.name AS category "
+        "FROM products "
+        "JOIN categories ON products.category_id = categories.id "
+    )
+    params = ()
+    if category_name is not None:
+        query += "WHERE categories.name = %s "
+        params = (category_name,)
+    query += f"ORDER BY {order_by}"
+
     connection = get_connection()
     with connection.cursor() as cursor:
-        if category_name is not None:
-            cursor.execute(
-                "SELECT products.*, categories.name AS category "
-                "FROM products "
-                "JOIN categories ON products.category_id = categories.id "
-                "WHERE categories.name = %s "
-                "ORDER BY products.id ASC",
-                (category_name,),
-            )
-        else:
-            cursor.execute(
-                "SELECT products.*, categories.name AS category "
-                "FROM products "
-                "JOIN categories ON products.category_id = categories.id "
-                "ORDER BY products.id ASC"
-            )
+        cursor.execute(query, params)
         products = cursor.fetchall()
     connection.close()
     return products
