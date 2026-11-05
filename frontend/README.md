@@ -38,13 +38,19 @@ src/
 | SHOP-107 | Giriş formu arayüzü | `pages/LoginPage.jsx` |
 | SHOP-108 | JWT'yi girişte kaydetme, çıkışta silme | `auth/AuthContext.jsx` |
 | SHOP-109 | Girişten sonra role göre yönlendirme | `auth/roles.js`, `pages/RoleHomePage.jsx` |
+| SHOP-96 | Ürün listesinde sıralama menüsü (fiyat, popülerlik) | `components/SortSelect.jsx`, `utils/sort.js`, `utils/useSortParam.js` |
+| SHOP-97 | Sıralamayı API'ye bağlama (`GET /products?sort=`), arama ve kategori sayfasında | `api/products.js`, `api/catalog.js`, `pages/SearchPage.jsx`, `pages/CategoryPage.jsx` |
+| SHOP-100 | Ürün detay sayfası, bütün özellikler (`/products/:id`) | `pages/ProductDetailPage.jsx` |
+| SHOP-101 | Stok sayısı, "Out of stock" etiketi, stok yoksa "Add to cart" kapalı | `pages/ProductDetailPage.jsx` |
 
 ## Backend ile ilgili notlar
 
 - **Arama:** `GET /products?search=...` gönderiliyor (backend tarafı SHOP-147). Backend parametreyi henüz desteklemediği için sonuçlar istemcide de ürün adı ve açıklamasına göre süzülüyor. Backend desteği gelince bu süzme zararsızdır; istenirse `api/products.js`'ten kaldırılabilir.
+- **Sıralama:** `sort` değerleri `price_asc`, `price_desc`, `popularity` (backend SHOP-75). Seçim adreste `?sort=` olarak durur. Yeni bir ürün listesine eklemek için: `const [sort, setSort] = useSortParam();` → `<SortSelect value={sort} onChange={setSort} />`. Testler: `__tests__/Sort.test.jsx`, `__tests__/ProductDetailPage.test.jsx`.
+- **Ürün detayı:** `GET /products/{id}` kategori adını değil `category_id`'yi döndüğü için ad `GET /categories`'ten bulunuyor.
 - **Roller:** `Customer → /`, `Sales Manager → /sales`, `Product Manager → /product-manager`, `Support Agent → /support`. Rol isimleri `database/02_seed.sql` ile aynı olmalı.
 - **Doğrulama kuralları** backend'deki `RegisterRequest` ile aynı (ad 2–200, vergi no 10–11, adres ≥5, şifre 8–72). Frontend ek olarak vergi numarasında sadece rakam ve şifre tekrarı istiyor.
 
 ## Bu işlerin kapsamı dışında bırakılanlar
 
-Kategori menüsü (SHOP-93/94/95), role göre menüler (SHOP-110), route guard (SHOP-111), ürün detay sayfası (SHOP-100) ve frontend unit testleri (SHOP-105/106) başka subtask'larda. Arama kartları `/products/:id`'ye bağlanıyor; detay sayfası gelene kadar bu adres 404 sayfası gösterir.
+Kategori menüsü (SHOP-93/94/95), role göre menüler (SHOP-110), route guard (SHOP-111) ve frontend unit testleri (SHOP-105/106) başka subtask'larda. Detay sayfasındaki "Add to cart" butonu stok yoksa kapalı; sepete ekleme davranışı SHOP-115'te bağlanacak.

@@ -6,6 +6,7 @@ import ForbiddenPage from "./pages/ForbiddenPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import ProductDetailPage from "./pages/ProductDetailPage";
 import RegisterPage from "./pages/RegisterPage";
 import RoleHomePage from "./pages/RoleHomePage";
 import SearchPage from "./pages/SearchPage";
@@ -18,6 +19,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/category/:name" element={<CategoryPage />} />
