@@ -1,0 +1,49 @@
+/* =========================================================
+   KOZALAK — design tokens
+   Every color, font and spacing value lives here.
+   Components must use these variables, never raw hex codes.
+   ========================================================= */
+
+:root {
+  /* ---- Palette ---- */
+  --paper:      #F4F0E8;   /* page background */
+  --paper-2:    #E9E2D6;   /* hero stage, hover fills */
+  --card:       #FBF9F5;   /* cards, inputs */
+  --line:       #DED5C9;   /* all borders & dividers */
+  --ink:        #2A1B17;   /* text, dark buttons */
+  --ink-soft:   #7D6F67;   /* secondary text */
+  --lime:       #C8DB3A;   /* THE accent — use sparingly */
+  --lime-text:  #5E6E10;   /* lime-family color readable on paper */
+  --petrol:     #163B48;
+  --maroon:     #6B1E2E;
+  --pink:       #D39FAA;
+  --brown:      #402823;
+  --gold:       #D99A2B;   /* rating stars only */
+  --danger:     #9B3047;   /* errors, "Stokta yok" */
+
+  /* Pastel tints for product image placeholders */
+  --tint-petrol: #DCE6E9;
+  --tint-pink:   #F1E2E5;
+  --tint-sand:   #EDE3D8;
+  --tint-lime:   #EEF2CF;
+
+  /* ---- Typography ---- */
+  --font-sans: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --text-xs: 11px;   /* mono labels */
+  --text-sm: 13px;   /* mono nav, buttons */
+  --text-md: 16px;   /* body */
+  --text-lg: 19px;   /* card titles */
+  --text-xl: 40px;   /* section titles */
+  --text-2xl: 64px;  /* hero */
+
+  /* ---- Spacing & shape ---- */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 40px; --space-8: 56px;
+  --radius: 0;       /* square corners everywhere (Telepathic style) */
+  --radius-device: 12px; /* only for drawn hardware: turntable, cassette */
+  --shadow: 10px 12px 22px rgba(42, 27, 23, .15);
+  --page-max: 1280px;
+  --page-pad: 40px;
+}

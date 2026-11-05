@@ -1,0 +1,79 @@
+/* =========================================================
+   KOZALAK — base styles & shared UI classes
+   Use these classes in every page so the site looks like one product.
+   ========================================================= */
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-sans); font-size: var(--text-md); line-height: 1.5; }
+#root { width: 100%; }
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* ---- Headings: tight grotesk ---- */
+h1, h2, h3 { font-weight: 500; margin: 0; letter-spacing: -0.035em; line-height: 1.05; }
+h1 { font-size: var(--text-2xl); letter-spacing: -0.045em; }
+h2 { font-size: var(--text-xl); }
+h3 { font-size: var(--text-lg); letter-spacing: -0.02em; }
+
+/* ---- Mono label (nav, buttons, tags, meta info) ---- */
+.mono { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em; font-size: var(--text-sm); }
+.mono-xs { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em; font-size: var(--text-xs); color: var(--ink-soft); }
+.muted { color: var(--ink-soft); }
+/* Lime "marker" highlight behind a word: <em class="highlight">plak</em> */
+.highlight { font-style: normal; background: linear-gradient(transparent 62%, var(--lime) 62%, var(--lime) 92%, transparent 92%); }
+
+/* ---- Layout ---- */
+.page { max-width: var(--page-max); margin: 0 auto; padding: var(--space-8) var(--page-pad); }
+.section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: var(--space-5); gap: var(--space-4); }
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .06em; font-size: var(--text-sm);
+  padding: 14px 26px; border: 1px solid var(--ink); border-radius: var(--radius);
+  background: var(--ink); color: var(--paper); cursor: pointer; text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.btn:hover:not(:disabled) { background: var(--brown); border-color: var(--brown); }
+.btn:disabled { background: transparent; border-color: var(--line); color: var(--ink-soft); cursor: not-allowed; }
+.btn-accent { background: var(--lime); border-color: var(--lime); color: var(--ink); }   /* max one per screen */
+.btn-accent:hover:not(:disabled) { background: #B9CC2E; border-color: #B9CC2E; }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn-ghost:hover:not(:disabled) { background: var(--paper-2); border-color: var(--paper-2); }
+.btn-block { width: 100%; }
+.btn-sm { padding: 10px 14px; font-size: var(--text-xs); }
+.link { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em; font-size: var(--text-sm); text-decoration: underline; text-underline-offset: 5px; cursor: pointer; background: none; border: 0; padding: 0; }
+
+/* ---- Forms ---- */
+.field { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-4); }
+.field label { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em; font-size: var(--text-xs); color: var(--ink-soft); }
+.input, .select, .textarea {
+  width: 100%; padding: 12px 14px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  font-size: var(--text-md); outline: none; transition: border-color .15s;
+}
+.input:focus, .select:focus, .textarea:focus { border-color: var(--ink); }
+.input.invalid { border-color: var(--danger); }
+.field-error { font-size: var(--text-xs); color: var(--danger); }
+.form-card { max-width: 420px; margin: 0 auto; background: var(--card); border: 1px solid var(--line); padding: var(--space-6); }
+
+/* ---- Card, tag, divider ---- */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+.tag { display: inline-block; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em; font-size: 10px; padding: 4px 8px; background: var(--ink); color: var(--paper); }
+.tag-accent { background: var(--lime); color: var(--ink); }
+.divider { border: 0; border-top: 1px solid var(--line); margin: var(--space-6) 0; }
+
+/* ---- Status text ---- */
+.text-ok { color: var(--lime-text); }
+.text-danger { color: var(--danger); }
+
+/* ---- Tables (admin pages: deliveries, invoices…) ---- */
+.table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); }
+.table th { text-align: left; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .05em; font-size: var(--text-xs); color: var(--ink-soft); font-weight: 500; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.table td { padding: 14px; border-bottom: 1px solid var(--line); }
+.table tr:last-child td { border-bottom: 0; }
+
+/* ---- Messages ---- */
+.page-message { text-align: center; padding: var(--space-8) 0; color: var(--ink-soft); }
+.page-message.error { color: var(--danger); }
