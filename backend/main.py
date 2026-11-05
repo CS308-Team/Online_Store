@@ -1,10 +1,22 @@
+import os
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, HTTPException
 import pymysql
 
 import bcrypt
+import jwt
+from dotenv import load_dotenv
 from pydantic import BaseModel, EmailStr, Field
 
+load_dotenv()
+
+JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET is missing. Copy backend/.env.example to backend/.env and set it.")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))
 app = FastAPI()
+
 
 #this shows the restrictions of the user while they are entering their information in the signup page
 class RegisterRequest(BaseModel):
@@ -13,6 +25,9 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     home_address: str = Field(min_length=5)
     password: str = Field(min_length=8,max_length=72)
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
 
 def get_connection():
     return pymysql.connect(
@@ -25,6 +40,15 @@ def get_connection():
     )
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+def check_password(password: str, password_hash: str) -> bool:
+    return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+def create_access_token(user_id: int, role: str) -> str:
+    payload = {
+        "sub": str(user_id),   # kullanıcı id'si (PyJWT string olmasını istiyor)
+        "role": role,          # kullanıcının rolü
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRE_MINUTES),  # bitiş süresi
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
 @app.get("/")
@@ -101,3 +125,29 @@ def register(data: RegisterRequest):
 
     # (g) Şifreyi veya hash'i asla geri gönderme
     return {"id": user_id, "name": data.name, "email": email}
+@app.post("/login")
+def login(data: LoginRequest):
+    email = data.email.lower()        # register'da da küçük harfle kaydediyoruz
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT users.id, users.password_hash, roles.name AS role "
+                "FROM users JOIN roles ON users.role_id = roles.id "
+                "WHERE users.email = %s",
+                (email,),
+            )
+            user = cursor.fetchone()
+    finally:
+        connection.close()
+
+    # Yanlış e-posta ve yanlış şifre için aynı mesaj
+    if user is None or not check_password(data.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid e-mail or password",
+                            headers={"WWW-Authenticate": "Bearer"})
+
+    return {
+        "access_token": create_access_token(user["id"], user["role"]),
+        "token_type": "bearer",
+        "role": user["role"],
+    }

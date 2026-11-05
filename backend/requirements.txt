@@ -1,8 +1,10 @@
-fastapi 
+fastapi
 uvicorn
 pymysql
 cryptography
-pytest 
+pytest
 httpx
-bcrypt 
+bcrypt
 pydantic[email]
+PyJWT
+python-dotenv
