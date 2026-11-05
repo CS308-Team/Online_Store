@@ -3,12 +3,22 @@ from main import app #we say app since we said app = = FastAPI() in the main so 
 
 client = TestClient(app)
 
+def test_home():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Hello from the online store!"}
+
+
 def test_get_product_by_id():
 
     response = client.get("/products/3")
 
     assert response.status_code == 200
     assert response.json()["name"] == "Kind of Blue"
+
+def test_get_product_not_found():
+    response = client.get("/products/99")
+    assert response.status_code == 404
 
 def test_list_products_returns_all_products():
 
