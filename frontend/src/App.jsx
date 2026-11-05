@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import Header from "./components/Header";
+import CategoryPage from "./pages/CategoryPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/category/:name" element={<CategoryPage />} />
           <Route path="/sales" element={<RoleHomePage title="Sales dashboard"
             description="Prices, discounts and invoices will appear here." />} />
           <Route path="/product-manager" element={<RoleHomePage title="Product dashboard"
