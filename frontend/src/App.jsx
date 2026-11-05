@@ -17,12 +17,12 @@ export default function App() {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/sales" element={<RoleHomePage title="Satış paneli"
-            description="Fiyat, indirim ve fatura işlemleri burada yer alacak." />} />
-          <Route path="/product-manager" element={<RoleHomePage title="Ürün paneli"
-            description="Stok, teslimat listesi ve yorum onayları burada yer alacak." />} />
-          <Route path="/support" element={<RoleHomePage title="Destek paneli"
-            description="Müşteri destek talepleri burada yer alacak." />} />
+          <Route path="/sales" element={<RoleHomePage title="Sales dashboard"
+            description="Prices, discounts and invoices will appear here." />} />
+          <Route path="/product-manager" element={<RoleHomePage title="Product dashboard"
+            description="Stock, the delivery list and review approvals will appear here." />} />
+          <Route path="/support" element={<RoleHomePage title="Support dashboard"
+            description="Customer support requests will appear here." />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
