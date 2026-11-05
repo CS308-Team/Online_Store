@@ -3,6 +3,7 @@ import { useAuth } from "../auth/useAuth";
 import { ROLE_LABEL, homePathFor } from "../auth/roles";
 import wordmarkUrl from "../assets/brand/wordmark.svg";
 import SearchBar from "./SearchBar";
+import CategoryMenu from "./CategoryMenu";
 
 // Sitenin üst şeridi: logo, arama çubuğu (SHOP-98), giriş/çıkış (SHOP-108).
 // Kategori menüsü (SHOP-93) ve role göre menüler (SHOP-110) buraya eklenecek.
@@ -41,6 +42,7 @@ export default function Header() {
           )}
         </nav>
       </div>
+      <CategoryMenu />
     </header>
   );
 }
