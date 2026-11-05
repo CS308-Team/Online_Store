@@ -39,8 +39,17 @@ SORT_OPTIONS = {
 DEFAULT_ORDER = "products.id ASC"
 
 
+# %, _ and \ are special in LIKE, so escape them to search for the text as typed.
+def escape_like(text: str) -> str:
+    return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 @app.get("/products")
-def list_products(category_name: str | None = None, sort: str | None = None):
+def list_products(
+    category_name: str | None = None,
+    sort: str | None = None,
+    search: str | None = None,
+):
     if sort is not None and sort not in SORT_OPTIONS:
         allowed = ", ".join(SORT_OPTIONS)
         raise HTTPException(
@@ -55,10 +64,17 @@ def list_products(category_name: str | None = None, sort: str | None = None):
         "FROM products "
         "JOIN categories ON products.category_id = categories.id "
     )
-    params = ()
+    conditions = []
+    params = []
     if category_name is not None:
-        query += "WHERE categories.name = %s "
-        params = (category_name,)
+        conditions.append("categories.name = %s")
+        params.append(category_name)
+    if search is not None:
+        pattern = f"%{escape_like(search.strip())}%"
+        conditions.append("(products.name LIKE %s OR products.description LIKE %s)")
+        params += [pattern, pattern]
+    if conditions:
+        query += "WHERE " + " AND ".join(conditions) + " "
     query += f"ORDER BY {order_by}"
 
     connection = get_connection()

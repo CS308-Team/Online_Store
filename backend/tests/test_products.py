@@ -90,3 +90,71 @@ def test_sort_rejects_sql_in_value():
 
     assert response.status_code == 400
     assert len(client.get("/products").json()) == 8
+
+def search_names(**params):
+    response = client.get("/products", params=params)
+
+    assert response.status_code == 200
+    return [product["name"] for product in response.json()]
+
+def test_search_matches_name():
+
+    assert search_names(search="Bookshelf") == ["Bookshelf Speakers"]
+
+def test_search_matches_description():
+
+    assert search_names(search="Miles Davis") == ["Kind of Blue"]
+
+def test_search_matches_name_or_description():
+
+    assert search_names(search="turntable") == [
+        "Classic Turntable",
+        "Bluetooth Turntable",
+        "Bookshelf Speakers",
+    ]
+
+def test_search_is_case_insensitive():
+
+    assert search_names(search="JAZZ") == search_names(search="jazz")
+    assert search_names(search="JAZZ") == ["Kind of Blue", "Jazz Classics CD"]
+
+def test_search_with_no_match_returns_empty_list():
+
+    assert search_names(search="xyz") == []
+
+def test_blank_search_returns_all_products():
+
+    assert len(search_names(search="   ")) == 8
+
+def test_search_keeps_out_of_stock_products():
+
+    response = client.get("/products", params={"search": "Bluetooth"})
+
+    products = response.json()
+    assert [product["name"] for product in products] == [
+        "Bluetooth Turntable",
+        "Wireless Headphones",
+    ]
+    assert all(product["quantity_in_stock"] == 0 for product in products)
+
+def test_search_is_sql_injection_safe():
+
+    assert search_names(search="' OR 1=1 -- ") == []
+    assert search_names(search="'; DROP TABLE products; -- ") == []
+    assert len(search_names()) == 8
+
+def test_search_treats_like_wildcards_as_text():
+
+    assert search_names(search="%") == []
+    assert search_names(search="_") == []
+
+def test_search_works_with_category_filter():
+
+    assert search_names(search="jazz", category_name="Vinyl Records") == ["Kind of Blue"]
+
+def test_search_works_with_sort():
+
+    assert search_names(search="jazz", sort="price_asc") == [
+        "Jazz Classics CD",
+        "Kind of Blue",
+    ]

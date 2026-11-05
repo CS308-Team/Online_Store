@@ -13,7 +13,7 @@ dist/
 .env
 
 # Personal notes
-SHOP-75-notes.md
+SHOP-*-notes.md
 
 # OS / editor
 .DS_Store
