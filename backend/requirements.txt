@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pymysql
+cryptography
+pytest
+httpx
+bcrypt
+pydantic[email]
+PyJWT
+python-dotenv
