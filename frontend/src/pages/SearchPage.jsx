@@ -2,31 +2,38 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { searchProducts } from "../api/products";
 import ProductCard from "../components/ProductCard";
+import SortSelect from "../components/SortSelect";
 import VinylLoader from "../components/VinylLoader";
+import { useSortParam } from "../utils/useSortParam";
 
-// SHOP-99: Arama sonuçları sayfası ve "sonuç yok" mesajı.
+// SHOP-99: Search results page with a "no results" message.
+// SHOP-96/97: Results can be sorted by price or popularity (?sort=).
 export default function SearchPage() {
   const [params] = useSearchParams();
   const query = (params.get("q") ?? "").trim();
-  // Sonuç hangi aramaya aitse onunla birlikte saklanır; adres değişince
-  // eski sonuç gösterilmez, yeni cevap gelene kadar yükleyici görünür.
-  const [result, setResult] = useState({ query: null, products: [], error: "" });
-  const latestQuery = useRef(query);
+  const [sort, setSort] = useSortParam();
+  const requestKey = `${query}\n${sort}`;
+
+  // The result is stored with the search + sort it belongs to.
+  // New search: the loader shows until the answer arrives.
+  // Same search, new sort: the old list stays (faded) until the new order arrives.
+  const [result, setResult] = useState({ key: null, query: null, products: [], error: "" });
+  const latestKey = useRef(requestKey);
 
   useEffect(() => {
-    latestQuery.current = query;
+    latestKey.current = requestKey;
     if (!query) return;
-    searchProducts(query)
+    searchProducts(query, sort)
       .then((products) => {
-        if (latestQuery.current === query) setResult({ query, products, error: "" });
+        if (latestKey.current === requestKey) setResult({ key: requestKey, query, products, error: "" });
       })
       .catch((err) => {
-        if (latestQuery.current === query) setResult({
-          query, products: [],
+        if (latestKey.current === requestKey) setResult({
+          key: requestKey, query, products: [],
           error: err.status === 0 ? err.message : "Something went wrong while searching. Please try again later.",
         });
       });
-  }, [query]);
+  }, [query, sort, requestKey]);
 
   if (!query) {
     return (
@@ -45,6 +52,7 @@ export default function SearchPage() {
   }
 
   const count = result.products.length;
+  const resorting = result.key !== requestKey;
   return (
     <section className="page">
       <div className="section-head">
@@ -63,9 +71,14 @@ export default function SearchPage() {
           <Link to="/" className="btn btn-ghost">Back to home</Link>
         </div>
       ) : (
-        <div className="product-grid">
-          {result.products.map((p) => <ProductCard key={p.id} product={p} />)}
-        </div>
+        <>
+          <div className="list-toolbar">
+            <SortSelect value={sort} onChange={setSort} />
+          </div>
+          <div className={"product-grid" + (resorting ? " is-stale" : "")} aria-busy={resorting}>
+            {result.products.map((p) => <ProductCard key={p.id} product={p} />)}
+          </div>
+        </>
       )}
     </section>
   );
