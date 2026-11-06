@@ -7,6 +7,8 @@ import bcrypt
 import jwt
 from dotenv import load_dotenv
 from pydantic import BaseModel, EmailStr, Field
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 load_dotenv()
 
@@ -15,6 +17,11 @@ if not JWT_SECRET:
     raise RuntimeError("JWT_SECRET is missing. Copy backend/.env.example to backend/.env and set it.")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))
+# Rol adları, roles tablosundakilerle birebir aynı (02_seed.sql)
+CUSTOMER = "Customer"
+SALES_MANAGER = "Sales Manager"
+PRODUCT_MANAGER = "Product Manager"
+SUPPORT_AGENT = "Support Agent"
 app = FastAPI()
 
 
@@ -49,6 +56,31 @@ def create_access_token(user_id: int, role: str) -> str:
         "exp": datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRE_MINUTES),  # bitiş süresi
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+# auto_error=False: başlık hiç yoksa FastAPI'nin 403'ü yerine kendi 401'imizi dönelim
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def get_current_user(credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme)):
+    """'Authorization: Bearer <token>' başlığından kullanıcıyı okur. Yoksa ya da geçersizse 401."""
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Not logged in",
+                            headers={"WWW-Authenticate": "Bearer"})
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired",
+                            headers={"WWW-Authenticate": "Bearer"})
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token",
+                            headers={"WWW-Authenticate": "Bearer"})
+    return {"id": int(payload["sub"]), "role": payload["role"]}
+def require_role(*allowed_roles: str):
+    """Endpoint'te kullanım: Depends(require_role(PRODUCT_MANAGER)). Rol uymuyorsa 403."""
+    def checker(current_user: dict = Depends(get_current_user)):
+        if current_user["role"] not in allowed_roles:
+            raise HTTPException(status_code=403, detail="You do not have permission for this action")
+        return current_user
+    return checker
 
 
 @app.get("/")
@@ -111,8 +143,15 @@ def register(data: RegisterRequest):
             if cursor.fetchone() is not None:
                 raise HTTPException(status_code=409, detail="This e-mail is already registered")
 
-            # (c) Kullanıcıyı hash'lenmiş şifreyle kaydet
-            cursor.execute(
+            
+            # SHOP-81: yeni kullanıcılar Customer rolüyle başlar
+            cursor.execute("SELECT id FROM roles WHERE name = %s", (CUSTOMER,))
+            customer_role_id = cursor.fetchone()["id"]
+            # (c) Kullanıcıyı hash'lenmiş şifreyle ve Customer rolüyle kaydet
+            cursor.execute( 
+                
+                
+                
                 "INSERT INTO users (name, tax_id, email, home_address, password_hash) "
                 "VALUES (%s, %s, %s, %s, %s)",
                 (data.name, data.tax_id, email, data.home_address,
@@ -151,3 +190,27 @@ def login(data: LoginRequest):
         "token_type": "bearer",
         "role": user["role"],
     }
+# SHOP-81: giriş yapmış herhangi bir kullanıcı
+@app.get("/me")
+def me(current_user: dict = Depends(get_current_user)):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT users.id, users.name, users.email, users.tax_id, users.home_address, "
+                "roles.name AS role "
+                "FROM users JOIN roles ON users.role_id = roles.id WHERE users.id = %s",
+                (current_user["id"],),
+            )
+            user = cursor.fetchone()
+    finally:
+        connection.close()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+# SHOP-81: rol kontrolünü denemek için örnek. Sadece Product Manager girebilir.
+@app.get("/product-manager/check")
+def product_manager_check(current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
+    return {"message": "Welcome, Product Manager", "user_id": current_user["id"]}
