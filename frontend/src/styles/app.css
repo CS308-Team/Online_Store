@@ -16,6 +16,15 @@ html { scroll-padding-top: 96px; }
 .header-actions a.link { text-decoration: underline; }
 .header-role { color: var(--ink); }
 
+.header-menu-link { text-decoration: none; color: var(--ink-soft); white-space: nowrap; }
+.header-menu-link:hover, .header-menu-link.active { color: var(--ink); }
+
+/* ---- Category menu ---- */
+.category-menu { max-width: var(--page-max); margin: 0 auto; padding: 0 var(--page-pad) var(--space-3); display: flex; gap: var(--space-6); overflow-x: auto; }
+.category-link { text-decoration: none; white-space: nowrap; padding-bottom: 4px; }
+.category-link:hover { color: var(--ink-soft); }
+.category-link.active { box-shadow: inset 0 -3px 0 var(--lime); }
+
 /* ---- Search bar ---- */
 .search-bar { flex: 1; display: flex; max-width: 560px; margin: 0 auto; }
 .search-input { padding: 10px 14px; border-right: 0; }
@@ -62,4 +71,11 @@ html { scroll-padding-top: 96px; }
   .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
   .product-card-body { padding: var(--space-3); }
   .product-card-meta { flex-direction: column; gap: var(--space-1); }
+  /* fade the right edge so it's clear the menu scrolls */
+  .category-menu {
+    padding-right: 48px; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 48px), transparent);
+  }
+  .category-menu::-webkit-scrollbar { display: none; }
 }

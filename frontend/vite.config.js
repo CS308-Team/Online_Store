@@ -8,6 +8,7 @@ const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000'
 
 export default defineConfig({
   plugins: [react()],
+  test: { environment: 'jsdom' },
   server: {
     proxy: {
       '/api': {
