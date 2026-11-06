@@ -32,6 +32,15 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     home_address: str = Field(min_length=5)
     password: str = Field(min_length=8,max_length=72)
+
+#card information restrictions 
+class PaymentRequest(BaseModel):
+    card_holder: str = Field(min_length=2, max_length=100)
+    card_number: str = Field(pattern=r"^\d{16}$")
+    expiry_month: int = Field(ge=1, le=12)
+    expiry_year: int = Field(ge=2026)
+    cvv: str = Field(pattern=r"^\d{3}$")
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -45,10 +54,27 @@ def get_connection():
         database="store",
         cursorclass=pymysql.cursors.DictCursor,
     )
+
+def is_card_expired(month: int, year: int) -> bool :
+    today = datetime.now()
+    if year < today.year:
+        return True
+    if year == today.year and month < today.month:
+        return True
+    return False
+
+DECLINED_TEST_CARD = "4000000000000002"
+def mock_bank_approves( card_number : str ) -> bool:
+    if card_number == DECLINED_TEST_CARD:
+        return False
+    return True
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
 def check_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+
 def create_access_token(user_id: int, role: str) -> str:
     payload = {
         "sub": str(user_id),   # kullanıcı id'si (PyJWT string olmasını istiyor)
@@ -74,6 +100,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials | None = Depends(
         raise HTTPException(status_code=401, detail="Invalid token",
                             headers={"WWW-Authenticate": "Bearer"})
     return {"id": int(payload["sub"]), "role": payload["role"]}
+
 def require_role(*allowed_roles: str):
     """Endpoint'te kullanım: Depends(require_role(PRODUCT_MANAGER)). Rol uymuyorsa 403."""
     def checker(current_user: dict = Depends(get_current_user)):
@@ -245,3 +272,12 @@ def me(current_user: dict = Depends(get_current_user)):
 @app.get("/product-manager/check")
 def product_manager_check(current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
     return {"message": "Welcome, Product Manager", "user_id": current_user["id"]}
+
+@app.post("/payment")
+def pay(data: PaymentRequest):
+    if is_card_expired(data.expiry_month, data.expiry_year):
+        raise HTTPException(status_code=400, detail="Card has expired")
+    if not mock_bank_approves(data.card_number):
+        raise HTTPException(status_code=402, detail= "Payment declined by the bank")
+    card_last4 = data.card_number[-4:]
+    return {"status": "approved", "card_last4" : card_last4 }
