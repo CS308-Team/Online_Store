@@ -1,0 +1,21 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# Environment and secrets
+.env
+
+# Personal notes
+SHOP-*-notes.md
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
