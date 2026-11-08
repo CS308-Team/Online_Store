@@ -32,9 +32,28 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     home_address: str = Field(min_length=5)
     password: str = Field(min_length=8,max_length=72)
+
+#card information restrictions 
+class PaymentRequest(BaseModel):
+    card_holder: str = Field(min_length=2, max_length=100)
+    card_number: str = Field(pattern=r"^\d{16}$")
+    expiry_month: int = Field(ge=1, le=12)
+    expiry_year: int = Field(ge=2026)
+    cvv: str = Field(pattern=r"^\d{3}$")
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+class OrderItemRequest(BaseModel):
+    product_id: int
+    quantity: int = Field(ge=1)
+
+
+class OrderRequest(BaseModel):
+    items: list[OrderItemRequest] = Field(min_length=1)
+    delivery_address: str = Field(min_length=5)
+    payment: PaymentRequest
 
 def get_connection():
     return pymysql.connect(
@@ -45,10 +64,27 @@ def get_connection():
         database="store",
         cursorclass=pymysql.cursors.DictCursor,
     )
+
+def is_card_expired(month: int, year: int) -> bool :
+    today = datetime.now()
+    if year < today.year:
+        return True
+    if year == today.year and month < today.month:
+        return True
+    return False
+
+DECLINED_TEST_CARD = "4000000000000002"
+def mock_bank_approves( card_number : str ) -> bool:
+    if card_number == DECLINED_TEST_CARD:
+        return False
+    return True
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
 def check_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+
 def create_access_token(user_id: int, role: str) -> str:
     payload = {
         "sub": str(user_id),   # kullanıcı id'si (PyJWT string olmasını istiyor)
@@ -74,6 +110,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials | None = Depends(
         raise HTTPException(status_code=401, detail="Invalid token",
                             headers={"WWW-Authenticate": "Bearer"})
     return {"id": int(payload["sub"]), "role": payload["role"]}
+
 def require_role(*allowed_roles: str):
     """Endpoint'te kullanım: Depends(require_role(PRODUCT_MANAGER)). Rol uymuyorsa 403."""
     def checker(current_user: dict = Depends(get_current_user)):
@@ -245,3 +282,69 @@ def me(current_user: dict = Depends(get_current_user)):
 @app.get("/product-manager/check")
 def product_manager_check(current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
     return {"message": "Welcome, Product Manager", "user_id": current_user["id"]}
+
+@app.post("/payment")
+def pay(data: PaymentRequest):
+    if is_card_expired(data.expiry_month, data.expiry_year):
+        raise HTTPException(status_code=400, detail="Card has expired")
+    if not mock_bank_approves(data.card_number):
+        raise HTTPException(status_code=402, detail= "Payment declined by the bank")
+    card_last4 = data.card_number[-4:]
+    return {"status": "approved", "card_last4" : card_last4 }
+
+@app.post("/orders", status_code=201)
+def create_order(data: OrderRequest, current_user: dict = Depends(get_current_user)):
+    if is_card_expired(data.payment.expiry_month, data.payment.expiry_year):
+        raise HTTPException(status_code=400, detail="Card has expired")
+    if not mock_bank_approves(data.payment.card_number):
+        raise HTTPException(status_code=402, detail="Payment declined by the bank")
+
+    connection = get_connection()
+    cursor = connection.cursor()
+    try:
+        connection.begin()
+
+        total = 0
+        prices = {}
+        for item in data.items:
+            cursor.execute(
+                "SELECT price, quantity_in_stock FROM products WHERE id = %s FOR UPDATE",
+                (item.product_id,),
+            )
+            product = cursor.fetchone()
+            if product is None:
+                raise HTTPException(status_code=404, detail="Product not found")
+            if product["quantity_in_stock"] < item.quantity:
+                raise HTTPException(status_code=409, detail="Not enough stock")
+            prices[item.product_id] = product["price"]
+            total += product["price"] * item.quantity
+
+        cursor.execute(
+            "INSERT INTO orders (user_id, total_price, card_last4, delivery_address) "
+            "VALUES (%s, %s, %s, %s)",
+            (current_user["id"], total, data.payment.card_number[-4:], data.delivery_address),
+        )
+        order_id = cursor.lastrowid
+
+        for item in data.items:
+            cursor.execute(
+                "INSERT INTO order_items (order_id, product_id, quantity, unit_price) "
+                "VALUES (%s, %s, %s, %s)",
+                (order_id, item.product_id, item.quantity, prices[item.product_id]),
+            )
+            cursor.execute(
+                "UPDATE products SET quantity_in_stock = quantity_in_stock - %s, "
+                "sold_count = sold_count + %s WHERE id = %s",
+                (item.quantity, item.quantity, item.product_id),
+            )
+
+        cursor.execute("DELETE FROM cart_items WHERE user_id = %s", (current_user["id"],))
+
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+    return {"order_id": order_id, "total_price": total, "status": "processing"}

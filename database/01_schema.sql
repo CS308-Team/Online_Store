@@ -33,3 +33,34 @@ CREATE TABLE users (
     role_id       INT          NOT NULL DEFAULT 1,
     FOREIGN KEY (role_id) REFERENCES roles(id)
 );
+
+CREATE TABLE orders (
+    id               INT AUTO_INCREMENT PRIMARY KEY,
+    user_id          INT            NOT NULL,
+    total_price      DECIMAL(10, 2) NOT NULL,
+    status           VARCHAR(20)    NOT NULL DEFAULT 'processing',
+    card_last4       CHAR(4)        NOT NULL,
+    delivery_address TEXT           NOT NULL,
+    created_at       DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)  -- orders should be connected to user 
+);
+
+CREATE TABLE order_items (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    order_id   INT            NOT NULL,
+    product_id INT            NOT NULL,
+    quantity   INT            NOT NULL,
+    unit_price DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (order_id)   REFERENCES orders(id), -- order items should be connected to oder 
+    FOREIGN KEY (product_id) REFERENCES products(id)  -- order items should be connected to product number
+);
+
+CREATE TABLE cart_items (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity   INT NOT NULL,
+    FOREIGN KEY (user_id)    REFERENCES users(id),
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    UNIQUE (user_id, product_id)
+);
