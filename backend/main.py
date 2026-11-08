@@ -45,6 +45,16 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+class OrderItemRequest(BaseModel):
+    product_id: int
+    quantity: int = Field(ge=1)
+
+
+class OrderRequest(BaseModel):
+    items: list[OrderItemRequest] = Field(min_length=1)
+    delivery_address: str = Field(min_length=5)
+    payment: PaymentRequest
+
 def get_connection():
     return pymysql.connect(
         host="localhost",
@@ -281,3 +291,60 @@ def pay(data: PaymentRequest):
         raise HTTPException(status_code=402, detail= "Payment declined by the bank")
     card_last4 = data.card_number[-4:]
     return {"status": "approved", "card_last4" : card_last4 }
+
+@app.post("/orders", status_code=201)
+def create_order(data: OrderRequest, current_user: dict = Depends(get_current_user)):
+    if is_card_expired(data.payment.expiry_month, data.payment.expiry_year):
+        raise HTTPException(status_code=400, detail="Card has expired")
+    if not mock_bank_approves(data.payment.card_number):
+        raise HTTPException(status_code=402, detail="Payment declined by the bank")
+
+    connection = get_connection()
+    cursor = connection.cursor()
+    try:
+        connection.begin()
+
+        total = 0
+        prices = {}
+        for item in data.items:
+            cursor.execute(
+                "SELECT price, quantity_in_stock FROM products WHERE id = %s FOR UPDATE",
+                (item.product_id,),
+            )
+            product = cursor.fetchone()
+            if product is None:
+                raise HTTPException(status_code=404, detail="Product not found")
+            if product["quantity_in_stock"] < item.quantity:
+                raise HTTPException(status_code=409, detail="Not enough stock")
+            prices[item.product_id] = product["price"]
+            total += product["price"] * item.quantity
+
+        cursor.execute(
+            "INSERT INTO orders (user_id, total_price, card_last4, delivery_address) "
+            "VALUES (%s, %s, %s, %s)",
+            (current_user["id"], total, data.payment.card_number[-4:], data.delivery_address),
+        )
+        order_id = cursor.lastrowid
+
+        for item in data.items:
+            cursor.execute(
+                "INSERT INTO order_items (order_id, product_id, quantity, unit_price) "
+                "VALUES (%s, %s, %s, %s)",
+                (order_id, item.product_id, item.quantity, prices[item.product_id]),
+            )
+            cursor.execute(
+                "UPDATE products SET quantity_in_stock = quantity_in_stock - %s, "
+                "sold_count = sold_count + %s WHERE id = %s",
+                (item.quantity, item.quantity, item.product_id),
+            )
+
+        cursor.execute("DELETE FROM cart_items WHERE user_id = %s", (current_user["id"],))
+
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+    return {"order_id": order_id, "total_price": total, "status": "processing"}
