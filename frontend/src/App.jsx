@@ -1,6 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import RoleRoute from "./auth/RoleRoute";
 import Header from "./components/Header";
+import CartPage from "./pages/CartPage";
 import CategoryPage from "./pages/CategoryPage";
 import DeliveryListPage from "./pages/DeliveryListPage";
 import ForbiddenPage from "./pages/ForbiddenPage";
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/category/:name" element={<CategoryPage />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/forbidden" element={<ForbiddenPage />} />
           <Route element={<RoleRoute allowed={["Customer"]} />}>
             <Route path="/invoice/:orderId" element={<InvoicePage />} />

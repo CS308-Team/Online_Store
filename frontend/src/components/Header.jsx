@@ -1,5 +1,6 @@
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
+import { useCart } from "../cart/useCart";
 import { ROLE_LABEL, homePathFor, menuFor } from "../auth/roles";
 import wordmarkUrl from "../assets/brand/wordmark.svg";
 import SearchBar from "./SearchBar";
@@ -8,6 +9,9 @@ import CategoryMenu from "./CategoryMenu";
 // Sitenin üst şeridi: logo, arama çubuğu (SHOP-98), giriş/çıkış (SHOP-108).
 export default function Header() {
   const { auth, logout } = useAuth();
+  const { count } = useCart();
+  // the shop (cart) is for guests and customers; staff roles only see their panels
+  const shopper = !auth || auth.role === "Customer";
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
@@ -28,6 +32,12 @@ export default function Header() {
         <SearchBar key={urlQuery} initialQuery={urlQuery} />
 
         <nav className="header-actions" aria-label="Account">
+          {shopper && (
+            <NavLink to="/cart" className="mono header-menu-link header-cart"
+              aria-label={count ? `Cart, ${count} ${count === 1 ? "item" : "items"}` : "Cart, empty"}>
+              Cart{count > 0 && <span className="header-cart-count">{count}</span>}
+            </NavLink>
+          )}
           {auth ? (
             <>
               {menuFor(auth.role).map((item) => (
