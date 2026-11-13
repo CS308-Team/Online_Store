@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { CartProvider } from "../cart/CartContext";
+import { CART_STORAGE_KEY } from "../cart/cartStorage";
 import ProductDetailPage from "../pages/ProductDetailPage";
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); localStorage.clear(); });
 
 const categories = [{ id: 1, name: "Turntables" }];
 const product = (stock) => ({
@@ -21,10 +23,14 @@ function mockApi({ item, status = 200 }) {
 }
 
 const renderPage = (path = "/products/7") => render(
-  <MemoryRouter initialEntries={[path]}>
-    <Routes><Route path="/products/:id" element={<ProductDetailPage />} /></Routes>
-  </MemoryRouter>
+  <CartProvider>
+    <MemoryRouter initialEntries={[path]}>
+      <Routes><Route path="/products/:id" element={<ProductDetailPage />} /></Routes>
+    </MemoryRouter>
+  </CartProvider>
 );
+
+const savedCart = () => JSON.parse(localStorage.getItem(CART_STORAGE_KEY) ?? "[]");
 
 describe("ProductDetailPage", () => {
   it("asks the API for that product", async () => {
@@ -69,5 +75,41 @@ describe("ProductDetailPage", () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(() => new Promise(() => {}));
     const { container } = renderPage();
     expect(container.querySelector(".vinyl")).not.toBeNull();
+  });
+
+  // ---- SHOP-115: Add to cart and quantity limit by stock ----
+  it("adds the chosen quantity to the cart", async () => {
+    mockApi({ item: product(5) });
+    renderPage();
+    await screen.findByText("In stock: 5");
+    fireEvent.click(screen.getByRole("button", { name: "Increase quantity" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add to cart" }));
+    expect(savedCart()).toEqual([{ product_id: 7, quantity: 2 }]);
+    expect(screen.getByText(/Added 2 to your cart/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "View cart (2)" }).getAttribute("href")).toBe("/cart");
+  });
+
+  it("only lets you add what is left after the cart", async () => {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify([{ product_id: 7, quantity: 3 }]));
+    mockApi({ item: product(5) });
+    renderPage();
+    await screen.findByText("In stock: 5");
+    const input = screen.getByRole("spinbutton", { name: "Quantity" });
+    expect(input.max).toBe("2");
+    fireEvent.change(input, { target: { value: "9" } });
+    fireEvent.blur(input);
+    expect(input.value).toBe("2");
+    fireEvent.click(screen.getByRole("button", { name: "Add to cart" }));
+    expect(savedCart()).toEqual([{ product_id: 7, quantity: 5 }]);
+  });
+
+  it("disables Add to cart when the whole stock is already in the cart", async () => {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify([{ product_id: 7, quantity: 5 }]));
+    mockApi({ item: product(5) });
+    renderPage();
+    await screen.findByText("In stock: 5");
+    expect(screen.getByRole("button", { name: "Add to cart" }).disabled).toBe(true);
+    expect(screen.getByText(/All 5 in stock are in your cart/)).toBeTruthy();
+    expect(screen.queryByRole("spinbutton")).toBeNull();
   });
 });
