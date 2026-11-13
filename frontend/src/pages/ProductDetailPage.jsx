@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getCategories } from "../api/catalog";
 import { getProduct } from "../api/products";
+import { useCart } from "../cart/useCart";
+import QuantityStepper from "../components/QuantityStepper";
 import RecordArt from "../components/RecordArt";
 import VinylLoader from "../components/VinylLoader";
 import { formatPrice } from "../utils/format";
 
 // SHOP-100: Product detail page with all product properties.
 // SHOP-101: Stock count, "Out of stock" label, Add to cart disabled when stock is 0.
+// SHOP-115: Add to cart with a quantity; the cart can never hold more than the stock.
 export default function ProductDetailPage() {
   const { id } = useParams();
   const [state, setState] = useState({ id: null, product: null, category: "", error: null });
@@ -86,15 +89,7 @@ function ProductDetail({ product, category }) {
             {inStock ? `In stock: ${stock}` : "Out of stock"}
           </p>
 
-          {/* Adding to the cart (quantity, stock limit) is wired up in SHOP-115. */}
-          <button
-            type="button"
-            className="btn btn-accent btn-block product-add"
-            disabled={!inStock}
-            aria-describedby="stock-status"
-          >
-            Add to cart
-          </button>
+          <AddToCart product={product} stock={stock} />
 
           <hr className="divider" />
 
@@ -113,5 +108,43 @@ function ProductDetail({ product, category }) {
         </div>
       </div>
     </section>
+  );
+}
+
+// SHOP-115: How many can still be added = stock − what is already in the cart.
+function AddToCart({ product, stock }) {
+  const { addItem, quantityOf } = useCart();
+  const inCart = quantityOf(product.id);
+  const canAdd = Math.max(0, stock - inCart);
+  const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(0);
+  const qty = Math.min(quantity, Math.max(canAdd, 1));
+
+  const add = () => {
+    addItem(product.id, qty, stock);
+    setAdded(qty);
+    setQuantity(1);
+  };
+
+  return (
+    <div className="product-buy">
+      {canAdd > 0 && (
+        <QuantityStepper value={qty} max={canAdd} onChange={(n) => { setQuantity(n); setAdded(0); }} />
+      )}
+      <button
+        type="button"
+        className="btn btn-accent product-add"
+        disabled={canAdd === 0}
+        aria-describedby="stock-status cart-status"
+        onClick={add}
+      >
+        Add to cart
+      </button>
+      <p id="cart-status" className="mono-xs product-cart-status" role="status">
+        {added > 0 && <>Added {added} to your cart · </>}
+        {stock > 0 && canAdd === 0 && <>All {stock} in stock are in your cart · </>}
+        {inCart > 0 && <Link to="/cart" className="link-inline">View cart ({inCart})</Link>}
+      </p>
+    </div>
   );
 }
