@@ -5,6 +5,7 @@ import CategoryPage from "./pages/CategoryPage";
 import DeliveryListPage from "./pages/DeliveryListPage";
 import ForbiddenPage from "./pages/ForbiddenPage";
 import HomePage from "./pages/HomePage";
+import InvoicePage from "./pages/InvoicePage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
@@ -25,6 +26,9 @@ export default function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/category/:name" element={<CategoryPage />} />
           <Route path="/forbidden" element={<ForbiddenPage />} />
+          <Route element={<RoleRoute allowed={["Customer"]} />}>
+            <Route path="/invoice/:orderId" element={<InvoicePage />} />
+          </Route>
           <Route element={<RoleRoute allowed={["Sales Manager"]} />}>
             <Route path="/sales" element={<RoleHomePage title="Sales dashboard"
               description="Prices, discounts and invoices will appear here." />} />
