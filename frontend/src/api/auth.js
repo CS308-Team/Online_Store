@@ -12,3 +12,9 @@ export function registerUser({ name, taxId, email, homeAddress, password }) {
 export function loginUser({ email, password }) {
   return apiRequest("/login", { method: "POST", body: { email, password } });
 }
+
+// GET /me (needs the login token) → 200 { id, name, email, tax_id, home_address, role }
+// · 401 token missing/expired · 404 user deleted. Used by the profile page (SHOP-126).
+export function getMe(token) {
+  return apiRequest("/me", { token });
+}

@@ -203,3 +203,11 @@ a.cart-line-name:hover { text-decoration: underline; text-underline-offset: 4px;
   .cart-line-qty { grid-column: 2; }
   .cart-line-end { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: var(--space-3); }
 }
+
+/* ---- Profile (SHOP-126) ---- */
+.profile-page { max-width: 820px; }
+.profile-name { margin-top: var(--space-2); }
+.profile-card { padding: var(--space-6); }
+.profile-address { white-space: pre-line; }
+.profile-back { display: inline-block; margin-top: var(--space-5); }
+@media (max-width: 560px) { .profile-card { padding: var(--space-5); } }

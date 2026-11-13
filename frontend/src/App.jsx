@@ -9,6 +9,7 @@ import HomePage from "./pages/HomePage";
 import InvoicePage from "./pages/InvoicePage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import ProfilePage from "./pages/ProfilePage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import RegisterPage from "./pages/RegisterPage";
 import RoleHomePage from "./pages/RoleHomePage";
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/forbidden" element={<ForbiddenPage />} />
           <Route element={<RoleRoute allowed={["Customer"]} />}>
             <Route path="/invoice/:orderId" element={<InvoicePage />} />
+            <Route path="/profile" element={<ProfilePage />} />
           </Route>
           <Route element={<RoleRoute allowed={["Sales Manager"]} />}>
             <Route path="/sales" element={<RoleHomePage title="Sales dashboard"
