@@ -31,7 +31,7 @@ export default function Header() {
           {auth ? (
             <>
               {menuFor(auth.role).map((item) => (
-                <NavLink key={item.to} to={item.to} className="mono header-menu-link">{item.label}</NavLink>
+                <NavLink key={item.to} to={item.to} end={item.end} className="mono header-menu-link">{item.label}</NavLink>
               ))}
               <span className="mono-xs header-role">{ROLE_LABEL[auth.role] ?? auth.role}</span>
               <button type="button" className="link" onClick={handleLogout}>Log out</button>

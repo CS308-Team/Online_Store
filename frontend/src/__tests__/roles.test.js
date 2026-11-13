@@ -14,7 +14,7 @@ describe("menuFor", () => {
     expect(paths("Sales Manager")).toEqual(["/sales"]);
   });
   it("shows the product panel to product managers", () => {
-    expect(paths("Product Manager")).toEqual(["/product-manager"]);
+    expect(paths("Product Manager")).toEqual(["/product-manager", "/product-manager/deliveries"]);
   });
   it("shows the support panel to support agents", () => {
     expect(paths("Support Agent")).toEqual(["/support"]);
