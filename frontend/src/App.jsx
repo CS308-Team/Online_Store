@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import RoleRoute from "./auth/RoleRoute";
 import Header from "./components/Header";
 import CategoryPage from "./pages/CategoryPage";
+import DeliveryListPage from "./pages/DeliveryListPage";
 import ForbiddenPage from "./pages/ForbiddenPage";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -31,6 +32,7 @@ export default function App() {
           <Route element={<RoleRoute allowed={["Product Manager"]} />}>
             <Route path="/product-manager" element={<RoleHomePage title="Product dashboard"
               description="Stock, the delivery list and review approvals will appear here." />} />
+            <Route path="/product-manager/deliveries" element={<DeliveryListPage />} />
           </Route>
           <Route element={<RoleRoute allowed={["Support Agent"]} />}>
             <Route path="/support" element={<RoleHomePage title="Support dashboard"

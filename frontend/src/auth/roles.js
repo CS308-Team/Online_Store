@@ -19,7 +19,10 @@ export const homePathFor = (role) => ROLE_HOME[role] ?? "/";
 // extra header links for each role; guests and customers only see the shop
 export const ROLE_MENU = {
   "Sales Manager": [{ to: "/sales", label: "Sales dashboard" }],
-  "Product Manager": [{ to: "/product-manager", label: "Product dashboard" }],
+  "Product Manager": [
+    { to: "/product-manager", label: "Product dashboard", end: true },
+    { to: "/product-manager/deliveries", label: "Deliveries" },
+  ],
   "Support Agent": [{ to: "/support", label: "Support dashboard" }],
 };
 

@@ -121,3 +121,7 @@ html { scroll-padding-top: 96px; }
 .stock-alert-title { font-weight: 600; margin: 0; }
 .stock-alert-list { margin: 0; padding-left: var(--space-5); }
 .stock-alert .btn { margin-top: var(--space-2); }
+
+/* ---- Delivery list ---- */
+.table-scroll { overflow-x: auto; }
+.delivery-address { max-width: 240px; }
