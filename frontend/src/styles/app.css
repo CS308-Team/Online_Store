@@ -114,3 +114,10 @@ html { scroll-padding-top: 96px; }
   .product-add { max-width: none; }
   .spec-row { grid-template-columns: 120px 1fr; }
 }
+
+/* ---- Out of stock alert ---- */
+.stock-alert { border: 1px solid var(--danger); background: var(--card); padding: var(--space-5); display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.stock-alert .mono-xs { color: var(--danger); }
+.stock-alert-title { font-weight: 600; margin: 0; }
+.stock-alert-list { margin: 0; padding-left: var(--space-5); }
+.stock-alert .btn { margin-top: var(--space-2); }
