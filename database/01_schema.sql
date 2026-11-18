@@ -33,3 +33,13 @@ CREATE TABLE users (
     role_id       INT          NOT NULL DEFAULT 1,
     FOREIGN KEY (role_id) REFERENCES roles(id)
 );
+-- SHOP-83: kullanıcıların sepeti
+CREATE TABLE cart_items (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity   INT NOT NULL CHECK (quantity > 0),
+    UNIQUE (user_id, product_id),
+    FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
