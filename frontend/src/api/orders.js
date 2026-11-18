@@ -11,3 +11,10 @@ export const getDeliveries = (token) => apiRequest("/deliveries", { token });
 //   items: [{ product_id, product_name, quantity, unit_price }] }
 export const getInvoice = (orderId, token) =>
   apiRequest(`/orders/${encodeURIComponent(orderId)}/invoice`, { token });
+
+// SHOP-125: GET /orders (backend SHOP-90 / SHOP-157, only the logged-in customer's own orders):
+// [{ order_id, created_at, status, total_price,
+//    items: [{ product_id, product_name, quantity, unit_price }] }]
+// status (SHOP-156): "processing" | "in-transit" | "delivered".
+// Same field names as the invoice above, so one order shape serves both pages.
+export const getMyOrders = (token) => apiRequest("/orders", { token });

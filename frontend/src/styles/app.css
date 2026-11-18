@@ -209,5 +209,33 @@ a.cart-line-name:hover { text-decoration: underline; text-underline-offset: 4px;
 .profile-name { margin-top: var(--space-2); }
 .profile-card { padding: var(--space-6); }
 .profile-address { white-space: pre-line; }
-.profile-back { display: inline-block; margin-top: var(--space-5); }
+.profile-links { display: flex; gap: var(--space-5); margin-top: var(--space-5); }
 @media (max-width: 560px) { .profile-card { padding: var(--space-5); } }
+
+/* ---- Order history (SHOP-125) ---- */
+.orders-page { max-width: 900px; }
+.order-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+.order-card { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
+.order-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-4); }
+.order-card-title { font-size: var(--text-lg); letter-spacing: -0.02em; margin: 0 0 var(--space-1); }
+.order-status { flex-shrink: 0; }
+.order-status-processing { background: var(--paper-2); color: var(--ink); }
+.order-status-transit { background: var(--petrol); color: var(--paper); }
+.order-status-delivered { background: var(--lime); color: var(--ink); }
+.order-status-unknown { background: var(--card); color: var(--ink-soft); border: 1px solid var(--line); }
+.order-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+.order-steps li { border-top: 3px solid var(--line); padding-top: var(--space-2); color: var(--ink-soft); }
+.order-steps li.is-done { border-top-color: var(--ink); color: var(--ink); }
+.order-items { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.order-items li { display: flex; align-items: baseline; gap: var(--space-1); padding: var(--space-2) 0; border-bottom: 1px solid var(--line); }
+.order-item-name { text-decoration: none; }
+.order-item-name:hover { text-decoration: underline; text-underline-offset: 3px; }
+.order-item-price { margin-left: auto; font-variant-numeric: tabular-nums; }
+.order-card-foot { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); }
+.order-total { font-weight: 500; font-variant-numeric: tabular-nums; }
+.order-total .mono-xs { margin-right: var(--space-2); }
+@media (max-width: 560px) {
+  .order-card { padding: var(--space-4); }
+  .order-steps .mono-xs { font-size: 10px; }
+}
+
