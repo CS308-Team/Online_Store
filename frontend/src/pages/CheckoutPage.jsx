@@ -9,12 +9,12 @@ import FormField from "../components/FormField";
 import OutOfStockAlert from "../components/OutOfStockAlert";
 import VinylLoader from "../components/VinylLoader";
 import { formatCardNumber, formatExpiry } from "../utils/card";
-import { toOrderPayment, validateCheckout } from "../utils/checkout";
-import { isOutOfStockError } from "../utils/errors";
+import { describePaymentError, toOrderPayment, validateCheckout } from "../utils/checkout";
 import { formatPrice } from "../utils/format";
 import "../styles/checkout.css";
 
 // SHOP-119: Checkout page with the delivery address and the credit card form.
+// SHOP-120: Card checks while typing and clear messages when the payment fails.
 // Only logged-in customers reach it (SHOP-118). The card details are sent once
 // with the order and are never stored in the browser.
 const EMPTY = { deliveryAddress: "", cardHolder: "", cardNumber: "", expiry: "", cvv: "" };
@@ -22,11 +22,13 @@ const FIELD_ORDER = Object.keys(EMPTY);
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { auth } = useAuth();
+  const { auth, logout } = useAuth();
   const { items, count, clear } = useCart();
 
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  // { error, info } where info comes from describePaymentError
   const [submitError, setSubmitError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [catalog, setCatalog] = useState({ byId: null, error: null });
@@ -91,10 +93,19 @@ export default function CheckoutPage() {
   const totalCents = lines.reduce((sum, l) => sum + l.lineCents, 0);
   const blocked = lines.some((l) => !l.available);
 
+  // A field is checked when the customer leaves it, then again on every change
   const update = (field, format) => (e) => {
     const value = format ? format(e.target.value) : e.target.value;
-    setValues((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+    const next = { ...values, [field]: value };
+    setValues(next);
+    if (touched[field] || errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: touched[field] ? validateCheckout(next)[field] ?? "" : "" }));
+    }
+  };
+  const blur = (field) => () => {
+    if (!values[field]) return;
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    setErrors((prev) => ({ ...prev, [field]: validateCheckout(values)[field] ?? "" }));
   };
 
   const submit = async (e) => {
@@ -104,6 +115,7 @@ export default function CheckoutPage() {
 
     const found = validateCheckout(values);
     setErrors(found);
+    setTouched(Object.fromEntries(FIELD_ORDER.map((f) => [f, true])));
     const firstInvalid = FIELD_ORDER.find((f) => found[f]);
     if (firstInvalid) {
       document.getElementById(firstInvalid)?.focus();
@@ -119,13 +131,20 @@ export default function CheckoutPage() {
       }, auth.token);
       clear();
       navigate(`/invoice/${order.order_id}`, { replace: true });
-    } catch (err) {
+    } catch (error) {
+      const info = describePaymentError(error);
       setSubmitting(false);
-      setSubmitError(err);
+      // Expired login: the route guard sends the customer to the login page and back here
+      if (info.loggedOut) { logout(); return; }
+      setSubmitError({ error, info });
+      if (info.fieldErrors) setErrors((prev) => ({ ...prev, ...info.fieldErrors }));
+      if (info.clearCvv) setValues((prev) => ({ ...prev, cvv: "" }));
+      const firstField = FIELD_ORDER.find((f) => info.fieldErrors?.[f]);
+      if (firstField) document.getElementById(firstField)?.focus();
     }
   };
 
-  const field = (id, format) => ({ id, value: values[id], onChange: update(id, format), error: errors[id] });
+  const field = (id, format) => ({ id, value: values[id], onChange: update(id, format), onBlur: blur(id), error: errors[id] });
 
   return (
     <section className="page checkout-page">
@@ -134,7 +153,7 @@ export default function CheckoutPage() {
         <Link to="/cart" className="link mono-xs">Back to cart</Link>
       </div>
 
-      {isOutOfStockError(submitError) && <OutOfStockAlert error={submitError} />}
+      {submitError?.info.outOfStock && <OutOfStockAlert error={submitError.error} />}
 
       <form className="checkout-layout" onSubmit={submit} noValidate>
         <div className="checkout-forms">
@@ -180,9 +199,10 @@ export default function CheckoutPage() {
               Some items are no longer available in this quantity. <Link to="/cart" className="link">Update your cart</Link>
             </p>
           )}
-          {submitError && !isOutOfStockError(submitError) && (
+          {submitError?.info.message && (
             <p className="form-alert" role="alert">
-              {submitError.status === 0 ? submitError.message : "The payment could not be completed. Please try again."}
+              {submitError.info.message}
+              {submitError.info.updateCart && <> <Link to="/cart" className="link">Go to cart</Link></>}
             </p>
           )}
 
