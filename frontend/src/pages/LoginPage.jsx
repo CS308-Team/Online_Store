@@ -3,6 +3,8 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { loginUser } from "../api/auth";
 import { useAuth } from "../auth/useAuth";
 import { homePathFor } from "../auth/roles";
+import { mergeCartAfterLogin } from "../cart/mergeAfterLogin";
+import { useCart } from "../cart/useCart";
 import FormField from "../components/FormField";
 import VinylLoader from "../components/VinylLoader";
 import { validateLogin } from "../utils/validation";
@@ -12,6 +14,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { auth, login } = useAuth();
+  const cart = useCart();
   const registeredEmail = location.state?.registeredEmail;
 
   const [values, setValues] = useState({ email: registeredEmail ?? "", password: "" });
@@ -41,7 +44,16 @@ export default function LoginPage() {
     try {
       const result = await loginUser({ email: values.email.trim(), password: values.password });
       const session = login(result);
-      navigate(homePathFor(session.role), { replace: true });
+      let target = homePathFor(session.role);
+
+      // SHOP-117: send the guest cart to the account and show the merged cart
+      if (session.role === "Customer") {
+        const guestItems = cart.items;
+        const merge = await mergeCartAfterLogin(guestItems, session.token);
+        if (merge.status === "merged") cart.replaceItems(merge.items);
+        if (guestItems.length > 0) target = "/cart";
+      }
+      navigate(target, { replace: true });
     } catch (err) {
       setLoading(false);
       setValues((prev) => ({ ...prev, password: "" }));
