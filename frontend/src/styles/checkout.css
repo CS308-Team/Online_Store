@@ -1,0 +1,18 @@
+/* ---- Checkout page (SHOP-119) ---- */
+.checkout-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--space-6); align-items: start; margin-top: var(--space-5); }
+.checkout-forms { display: flex; flex-direction: column; gap: var(--space-5); }
+.checkout-section { margin: 0; padding: var(--space-5) var(--space-5) var(--space-2); min-width: 0; }
+.checkout-section legend { padding: 0 var(--space-2); margin-left: calc(-1 * var(--space-2)); }
+.checkout-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.checkout-note { margin: 0 0 var(--space-4); color: var(--ink-soft); }
+.checkout-page .textarea.invalid { border-color: var(--danger); }
+.checkout-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--text-sm); }
+.checkout-lines li { display: flex; justify-content: space-between; gap: var(--space-3); }
+.checkout-lines li span:last-child { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.checkout-summary .form-alert { margin: 0; }
+.checkout-page .stock-alert { margin-top: var(--space-5); }
+
+@media (max-width: 900px) {
+  .checkout-layout { grid-template-columns: 1fr; }
+  .checkout-summary { position: static; }
+}
