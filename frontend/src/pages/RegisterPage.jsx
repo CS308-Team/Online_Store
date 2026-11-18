@@ -5,7 +5,7 @@ import FormField from "../components/FormField";
 import VinylLoader from "../components/VinylLoader";
 import { mapServerErrors, validateRegister } from "../utils/validation";
 
-// SHOP-102 kayıt formu · SHOP-103 doğrulama ve hata mesajları · SHOP-104 API bağlantısı
+// SHOP-102 sign up form · SHOP-103 validation and error messages · SHOP-104 API connection
 const EMPTY = { name: "", taxId: "", email: "", homeAddress: "", password: "", passwordConfirm: "" };
 
 export default function RegisterPage() {
@@ -21,7 +21,7 @@ export default function RegisterPage() {
   const update = (field) => (e) => {
     const next = { ...values, [field]: e.target.value };
     setValues(next);
-    // Alan bir kere kontrol edildiyse yazarken hatayı canlı güncelle
+    // Once a field has been checked, update its error while the user types
     if (touched[field]) setErrors((prev) => ({ ...prev, [field]: validateRegister(next)[field] }));
   };
   const blur = (field) => () => {

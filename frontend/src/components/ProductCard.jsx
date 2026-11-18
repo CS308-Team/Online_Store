@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { formatPrice } from "../utils/format";
 import RecordArt from "./RecordArt";
 
-// Arama sonuçlarında (ve ileride kategori sayfasında) kullanılan ürün kartı.
-// Stokta olmayan ürünler de listelenir, sadece "Stokta yok" diye işaretlenir.
+// Product card used in search results and on category pages.
+// Products that are out of stock are still listed, marked "Out of stock".
 export default function ProductCard({ product }) {
   const stock = Number(product.quantity_in_stock ?? 0);
   return (

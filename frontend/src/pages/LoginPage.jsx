@@ -10,7 +10,7 @@ import FormField from "../components/FormField";
 import VinylLoader from "../components/VinylLoader";
 import { validateLogin } from "../utils/validation";
 
-// SHOP-107 giriş formu · SHOP-108 JWT kaydı · SHOP-109 role göre yönlendirme
+// SHOP-107 login form · SHOP-108 save the JWT · SHOP-109 redirect by role
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,7 +25,7 @@ export default function LoginPage() {
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Zaten giriş yapmışsa formu gösterme, kendi ana sayfasına gönder
+  // Already logged in: skip the form and go to the user's home page
   if (auth && !loading) return <Navigate to={homePathFor(auth.role)} replace />;
 
   const update = (field) => (e) => {

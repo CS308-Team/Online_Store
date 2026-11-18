@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// SHOP-98: Header'daki arama çubuğu. Arama /search?q=... adresine gider;
-// böylece sonuç sayfası paylaşılabilir ve geri tuşu çalışır.
-// initialQuery adresteki ?q= değeridir. Header bu bileşeni key={initialQuery}
-// ile çizer; adres değişince (geri tuşu, başka sayfa) kutu kendiliğinden yenilenir.
+// SHOP-98: Search bar in the header. A search opens /search?q=..., so the
+// results page can be shared and the back button works.
+// initialQuery is the ?q= value in the address. Header renders this component with
+// key={initialQuery}, so the box resets when the address changes (back button, other page).
 export default function SearchBar({ initialQuery = "" }) {
   const navigate = useNavigate();
   const [query, setQuery] = useState(initialQuery);

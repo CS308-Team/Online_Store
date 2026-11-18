@@ -1,6 +1,6 @@
-// SHOP-103: İstemci tarafı doğrulama. Kurallar backend'deki RegisterRequest /
-// LoginRequest modelleriyle (backend/main.py) aynı tutulur; böylece kullanıcı
-// hatayı sunucuya gitmeden görür.
+// SHOP-103: Client-side validation. The rules match the backend's RegisterRequest /
+// LoginRequest models (backend/main.py), so users see mistakes before anything
+// is sent to the server.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const byteLength = (s) => new TextEncoder().encode(s).length;
 
@@ -49,7 +49,7 @@ export function validateLogin(values) {
   return errors;
 }
 
-// FastAPI'nin 422 cevabındaki alan adlarını formdaki alanlara çevirir.
+// Maps the field names in FastAPI's 422 answer to the form fields.
 const FIELD_MAP = { name: "name", tax_id: "taxId", email: "email", home_address: "homeAddress", password: "password" };
 export function mapServerErrors(detail) {
   if (!Array.isArray(detail)) return {};
