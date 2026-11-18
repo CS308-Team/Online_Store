@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getInvoice } from "../api/orders";
 import { useAuth } from "../auth/useAuth";
+import InvoiceEmailNotice from "../components/InvoiceEmailNotice";
 import VinylLoader from "../components/VinylLoader";
 import { formatPrice } from "../utils/format";
 
@@ -40,7 +41,10 @@ export default function InvoicePage() {
   return (
     <section className="page invoice-page">
       <div className="invoice-actions no-print">
-        <p className="invoice-thanks" role="status">Payment approved. Thank you for your order!</p>
+        <div>
+          <p className="invoice-thanks" role="status">Payment approved. Thank you for your order!</p>
+          <InvoiceEmailNotice invoice={invoice} />
+        </div>
         <div className="invoice-buttons">
           <button className="btn" onClick={() => window.print()}>Print invoice</button>
           <Link to="/" className="btn btn-ghost">Continue shopping</Link>

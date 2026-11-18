@@ -239,3 +239,8 @@ a.cart-line-name:hover { text-decoration: underline; text-underline-offset: 4px;
   .order-steps .mono-xs { font-size: 10px; }
 }
 
+/* ---- Invoice e-mail notice (SHOP-124) ---- */
+.invoice-email { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--ink-soft); }
+.invoice-email.is-sent::before { content: "✓ "; color: var(--lime-text); font-weight: 600; }
+.invoice-email.is-failed { color: var(--danger); }
+@media print { .invoice-email { display: none; } }
