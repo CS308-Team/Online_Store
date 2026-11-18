@@ -1,5 +1,5 @@
-// Backend'deki roles tablosundaki isimler (database/02_seed.sql) ve
-// her rolün girişten sonra açılacak ana sayfası (SHOP-109).
+// Role names from the backend's roles table (database/02_seed.sql) and
+// the home page each role opens after login (SHOP-109).
 export const ROLE_HOME = {
   "Customer": "/",
   "Sales Manager": "/sales",

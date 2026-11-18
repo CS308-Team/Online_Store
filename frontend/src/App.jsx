@@ -3,6 +3,7 @@ import RoleRoute from "./auth/RoleRoute";
 import Header from "./components/Header";
 import CartPage from "./pages/CartPage";
 import CategoryPage from "./pages/CategoryPage";
+import CheckoutPage from "./pages/CheckoutPage";
 import DeliveryListPage from "./pages/DeliveryListPage";
 import ForbiddenPage from "./pages/ForbiddenPage";
 import HomePage from "./pages/HomePage";
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/forbidden" element={<ForbiddenPage />} />
           <Route element={<RoleRoute allowed={["Customer"]} />}>
+            <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/invoice/:orderId" element={<InvoicePage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>

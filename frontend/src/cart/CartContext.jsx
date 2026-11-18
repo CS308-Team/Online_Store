@@ -20,6 +20,8 @@ export function CartProvider({ children }) {
   const removeItem = useCallback((productId) =>
     update((prev) => setInItems(prev, productId, 0)), [update]);
   const clear = useCallback(() => update(() => []), [update]);
+  // SHOP-117: after login the cart becomes the account's merged cart
+  const replaceItems = useCallback((next) => update(() => next), [update]);
 
   // Cart changed in another tab
   useEffect(() => {
@@ -32,8 +34,8 @@ export function CartProvider({ children }) {
     items,
     count: countItems(items),
     quantityOf: (productId) => items.find((i) => i.product_id === productId)?.quantity ?? 0,
-    addItem, setQuantity, removeItem, clear,
-  }), [items, addItem, setQuantity, removeItem, clear]);
+    addItem, setQuantity, removeItem, clear, replaceItems,
+  }), [items, addItem, setQuantity, removeItem, clear, replaceItems]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

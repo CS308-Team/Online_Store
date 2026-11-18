@@ -6,7 +6,7 @@ import wordmarkUrl from "../assets/brand/wordmark.svg";
 import SearchBar from "./SearchBar";
 import CategoryMenu from "./CategoryMenu";
 
-// Sitenin üst şeridi: logo, arama çubuğu (SHOP-98), giriş/çıkış (SHOP-108).
+// Top bar of the site: logo, search bar (SHOP-98), log in / log out (SHOP-108).
 export default function Header() {
   const { auth, logout } = useAuth();
   const { count } = useCart();
