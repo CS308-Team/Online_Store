@@ -74,6 +74,47 @@ def get_current_user(credentials: HTTPAuthorizationCredentials | None = Depends(
         raise HTTPException(status_code=401, detail="Invalid token",
                             headers={"WWW-Authenticate": "Bearer"})
     return {"id": int(payload["sub"]), "role": payload["role"]}
+class CartItemRequest(BaseModel):
+    product_id: int
+    quantity: int = Field(ge=1)
+
+class CartQuantityRequest(BaseModel):
+    quantity: int = Field(ge=1)
+
+class CartMergeRequest(BaseModel):
+    items: list[CartItemRequest]
+
+
+def get_stock(cursor, product_id: int) -> int:
+    cursor.execute("SELECT quantity_in_stock FROM products WHERE id = %s", (product_id,))
+    row = cursor.fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return row["quantity_in_stock"]
+
+def get_cart_quantity(cursor, user_id: int, product_id: int) -> int:
+    cursor.execute("SELECT quantity FROM cart_items WHERE user_id = %s AND product_id = %s",
+                   (user_id, product_id))
+    row = cursor.fetchone()
+    return row["quantity"] if row else 0
+
+def save_cart_quantity(cursor, user_id: int, product_id: int, quantity: int):
+    # Satır yoksa ekler, varsa miktarı günceller (UNIQUE sayesinde)
+    cursor.execute(
+        "INSERT INTO cart_items (user_id, product_id, quantity) VALUES (%s, %s, %s) "
+        "ON DUPLICATE KEY UPDATE quantity = VALUES(quantity)",
+        (user_id, product_id, quantity),
+    )
+
+def read_cart(cursor, user_id: int):
+    cursor.execute(
+        "SELECT cart_items.product_id, cart_items.quantity, products.name, products.price, "
+        "products.quantity_in_stock "
+        "FROM cart_items JOIN products ON cart_items.product_id = products.id "
+        "WHERE cart_items.user_id = %s ORDER BY cart_items.id",
+        (user_id,),
+    )
+    return cursor.fetchall()
 def require_role(*allowed_roles: str):
     """Endpoint'te kullanım: Depends(require_role(PRODUCT_MANAGER)). Rol uymuyorsa 403."""
     def checker(current_user: dict = Depends(get_current_user)):
@@ -245,3 +286,89 @@ def me(current_user: dict = Depends(get_current_user)):
 @app.get("/product-manager/check")
 def product_manager_check(current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
     return {"message": "Welcome, Product Manager", "user_id": current_user["id"]}
+# SHOP-83: sepeti listele
+@app.get("/cart")
+def get_cart(current_user: dict = Depends(get_current_user)):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            return read_cart(cursor, current_user["id"])
+    finally:
+        connection.close()
+
+# SHOP-83: sepete ekle (varsa miktarı artırır)
+@app.post("/cart/items", status_code=201)
+def add_to_cart(data: CartItemRequest, current_user: dict = Depends(get_current_user)):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            stock = get_stock(cursor, data.product_id)
+            new_qty = get_cart_quantity(cursor, current_user["id"], data.product_id) + data.quantity
+            if new_qty > stock:
+                raise HTTPException(status_code=400, detail=f"Only {stock} left in stock")
+            save_cart_quantity(cursor, current_user["id"], data.product_id, new_qty)
+            connection.commit()
+            return read_cart(cursor, current_user["id"])
+    finally:
+        connection.close()
+
+# SHOP-83: miktarı değiştir
+@app.patch("/cart/items/{product_id:int}")
+def change_quantity(product_id: int, data: CartQuantityRequest,
+                    current_user: dict = Depends(get_current_user)):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            if get_cart_quantity(cursor, current_user["id"], product_id) == 0:
+                raise HTTPException(status_code=404, detail="Product is not in the cart")
+            stock = get_stock(cursor, product_id)
+            if data.quantity > stock:
+                raise HTTPException(status_code=400, detail=f"Only {stock} left in stock")
+            save_cart_quantity(cursor, current_user["id"], product_id, data.quantity)
+            connection.commit()
+            return read_cart(cursor, current_user["id"])
+    finally:
+        connection.close()
+
+# SHOP-83: sepetten çıkar
+@app.delete("/cart/items/{product_id:int}")
+def remove_from_cart(product_id: int, current_user: dict = Depends(get_current_user)):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM cart_items WHERE user_id = %s AND product_id = %s",
+                           (current_user["id"], product_id))
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Product is not in the cart")
+            connection.commit()
+            return read_cart(cursor, current_user["id"])
+    finally:
+        connection.close()
+# SHOP-83: girişten sonra misafir sepetini kullanıcının sepetine kat
+@app.post("/cart/merge")
+def merge_cart(data: CartMergeRequest, current_user: dict = Depends(get_current_user)):
+    # Misafir listesinde aynı ürün iki kez varsa önce topla
+    guest_totals = {}
+    for item in data.items:
+        guest_totals[item.product_id] = guest_totals.get(item.product_id, 0) + item.quantity
+
+    adjusted = []  # stok yüzünden azaltılan ürünler
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            for product_id, guest_qty in guest_totals.items():
+                cursor.execute("SELECT quantity_in_stock FROM products WHERE id = %s", (product_id,))
+                row = cursor.fetchone()
+                if row is None:
+                    continue  # silinmiş ürün: atla
+                stock = row["quantity_in_stock"]
+                wanted = get_cart_quantity(cursor, current_user["id"], product_id) + guest_qty
+                final = min(wanted, stock)
+                if final < wanted:
+                    adjusted.append({"product_id": product_id, "requested": wanted, "added": final})
+                if final > 0:
+                    save_cart_quantity(cursor, current_user["id"], product_id, final)
+            connection.commit()
+            return {"cart": read_cart(cursor, current_user["id"]), "adjusted": adjusted}
+    finally:
+        connection.close()
