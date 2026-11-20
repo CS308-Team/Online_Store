@@ -1,5 +1,5 @@
-// JWT'nin payload kısmını okur (imzayı doğrulamaz; o iş backend'in).
-// Sadece rolü ve bitiş zamanını (exp) öğrenmek için kullanılır.
+// Reads the payload of a JWT (does not verify the signature; the backend does that).
+// Only used to read the role and the expiry time (exp).
 export function decodeToken(token) {
   try {
     const part = token.split(".")[1];

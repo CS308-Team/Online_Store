@@ -1,12 +1,12 @@
 /* =========================================================
-   Uygulamaya özel düzen: header, arama, ürün kartları, form ekleri.
-   Kozalak kuralları: sadece token değişkenleri, köşesiz, gölgesiz.
+   App layout: header, search, product cards, form extras.
+   Kozalak rules: token variables only, no rounded corners, no shadows.
    ========================================================= */
 
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* ---- Header ---- */
-/* Sticky header odaklanılan/kaydırılan alanın üstünü kapatmasın */
+/* Keep the sticky header from covering a focused or scrolled-to field */
 html { scroll-padding-top: 96px; }
 .site-header { border-bottom: 1px solid var(--line); background: var(--paper); position: sticky; top: 0; z-index: 10; }
 .site-header-inner { max-width: var(--page-max); margin: 0 auto; padding: var(--space-4) var(--page-pad); display: flex; align-items: center; gap: var(--space-6); }
@@ -28,7 +28,7 @@ html { scroll-padding-top: 96px; }
 /* ---- Search bar ---- */
 .search-bar { flex: 1; display: flex; max-width: 560px; margin: 0 auto; }
 .search-input { padding: 10px 14px; border-right: 0; }
-.search-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; } /* tarayıcının mavi ✕'i paletin dışında */
+.search-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; } /* the browser's blue ✕ is outside the palette */
 .search-button { flex-shrink: 0; }
 
 /* ---- Forms ---- */
@@ -114,3 +114,133 @@ html { scroll-padding-top: 96px; }
   .product-add { max-width: none; }
   .spec-row { grid-template-columns: 120px 1fr; }
 }
+
+/* ---- Out of stock alert ---- */
+.stock-alert { border: 1px solid var(--danger); background: var(--card); padding: var(--space-5); display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+.stock-alert .mono-xs { color: var(--danger); }
+.stock-alert-title { font-weight: 600; margin: 0; }
+.stock-alert-list { margin: 0; padding-left: var(--space-5); }
+.stock-alert .btn { margin-top: var(--space-2); }
+
+/* ---- Delivery list ---- */
+.table-scroll { overflow-x: auto; }
+.delivery-address { max-width: 240px; }
+
+/* ---- Invoice ---- */
+.invoice-page { max-width: 820px; }
+.invoice-actions { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-5); }
+.invoice-thanks { margin: 0; font-weight: 600; }
+.invoice-buttons { display: flex; gap: var(--space-3); }
+.invoice { padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-6); }
+.invoice-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-5); flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: var(--space-5); }
+.invoice-title { font-size: var(--text-xl); margin-top: var(--space-1); }
+.invoice-meta { display: flex; gap: var(--space-6); margin: 0; }
+.invoice-meta dd { margin: var(--space-1) 0 0; }
+.invoice-parties { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
+.invoice-parties p { margin: var(--space-2) 0 0; }
+.invoice-items td:not(:first-child), .invoice-items th:not(:first-child) { text-align: right; }
+.invoice-total { display: flex; justify-content: flex-end; align-items: baseline; gap: var(--space-4); }
+.invoice-total strong { font-size: 28px; letter-spacing: -0.02em; }
+
+@media (max-width: 720px) {
+  .invoice-parties { grid-template-columns: 1fr; }
+  .invoice { padding: var(--space-5); }
+}
+
+@media print {
+  .site-header, .no-print { display: none !important; }
+  body { background: #fff; }
+  .page { padding: 0; }
+  .invoice, .invoice .table { border: 0; padding: 0; background: #fff; }
+}
+
+/* ---- Quantity stepper (SHOP-115) ---- */
+.stepper { display: inline-flex; border: 1px solid var(--line); background: var(--card); }
+.stepper-btn { width: 44px; height: 46px; border: 0; background: none; font-size: 18px; cursor: pointer; }
+.stepper-btn:hover:not(:disabled) { background: var(--paper-2); }
+.stepper-btn:disabled { color: var(--line); cursor: not-allowed; }
+.stepper-input { width: 52px; border: 0; border-left: 1px solid var(--line); border-right: 1px solid var(--line); background: none; text-align: center; font-variant-numeric: tabular-nums; -moz-appearance: textfield; appearance: textfield; }
+.stepper-input::-webkit-inner-spin-button, .stepper-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper-input:focus { outline: 2px solid var(--ink); outline-offset: -2px; }
+
+/* ---- Add to cart on the product page (SHOP-115) ---- */
+.product-buy { display: flex; flex-wrap: wrap; align-items: stretch; gap: var(--space-3); width: 100%; max-width: 420px; }
+.product-buy .product-add { flex: 1; min-width: 180px; max-width: none; }
+.product-cart-status { flex-basis: 100%; margin: 0; min-height: 1.5em; }
+.link-inline { color: var(--ink); text-underline-offset: 3px; }
+
+/* ---- Header cart link (SHOP-113) ---- */
+.header-cart { display: inline-flex; align-items: center; gap: var(--space-2); }
+.header-cart-count { display: inline-block; min-width: 20px; padding: 1px 6px; background: var(--ink); color: var(--paper); font-size: var(--text-xs); text-align: center; }
+
+/* ---- Cart page (SHOP-113) ---- */
+.cart-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: var(--space-6); align-items: start; }
+.cart-lines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.cart-line { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto 120px; gap: var(--space-5); align-items: center; padding: var(--space-4); }
+.cart-line.is-unavailable .cart-line-art, .cart-line.is-unavailable .cart-line-name { opacity: .5; }
+.cart-line-art { display: block; aspect-ratio: 1; border: 1px solid var(--line); }
+.cart-line-info { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.cart-line-name { font-size: var(--text-lg); letter-spacing: -0.02em; text-decoration: none; }
+a.cart-line-name:hover { text-decoration: underline; text-underline-offset: 4px; }
+.cart-line-unit { font-size: var(--text-sm); }
+.cart-line-note { margin: var(--space-1) 0 0; }
+.cart-line-end { display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2); }
+.cart-line-total { font-weight: 500; font-variant-numeric: tabular-nums; }
+.cart-line-remove { font-size: var(--text-xs); color: var(--ink-soft); }
+.cart-summary { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); position: sticky; top: 120px; }
+.cart-summary-rows { margin: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.cart-summary-rows > div { display: flex; justify-content: space-between; }
+.cart-summary-rows dd { margin: 0; font-variant-numeric: tabular-nums; }
+.cart-total { border-top: 1px solid var(--line); padding-top: var(--space-3); margin-top: var(--space-2); font-size: var(--text-lg); font-weight: 500; }
+.cart-continue { align-self: center; font-size: var(--text-xs); }
+
+@media (max-width: 860px) {
+  .cart-layout { grid-template-columns: 1fr; }
+  .cart-summary { position: static; }
+}
+@media (max-width: 560px) {
+  .cart-line { grid-template-columns: 72px minmax(0, 1fr); gap: var(--space-3) var(--space-4); }
+  .cart-line-qty { grid-column: 2; }
+  .cart-line-end { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: var(--space-3); }
+}
+
+/* ---- Profile (SHOP-126) ---- */
+.profile-page { max-width: 820px; }
+.profile-name { margin-top: var(--space-2); }
+.profile-card { padding: var(--space-6); }
+.profile-address { white-space: pre-line; }
+.profile-links { display: flex; gap: var(--space-5); margin-top: var(--space-5); }
+@media (max-width: 560px) { .profile-card { padding: var(--space-5); } }
+
+/* ---- Order history (SHOP-125) ---- */
+.orders-page { max-width: 900px; }
+.order-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+.order-card { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
+.order-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-4); }
+.order-card-title { font-size: var(--text-lg); letter-spacing: -0.02em; margin: 0 0 var(--space-1); }
+.order-status { flex-shrink: 0; }
+.order-status-processing { background: var(--paper-2); color: var(--ink); }
+.order-status-transit { background: var(--petrol); color: var(--paper); }
+.order-status-delivered { background: var(--lime); color: var(--ink); }
+.order-status-unknown { background: var(--card); color: var(--ink-soft); border: 1px solid var(--line); }
+.order-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+.order-steps li { border-top: 3px solid var(--line); padding-top: var(--space-2); color: var(--ink-soft); }
+.order-steps li.is-done { border-top-color: var(--ink); color: var(--ink); }
+.order-items { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.order-items li { display: flex; align-items: baseline; gap: var(--space-1); padding: var(--space-2) 0; border-bottom: 1px solid var(--line); }
+.order-item-name { text-decoration: none; }
+.order-item-name:hover { text-decoration: underline; text-underline-offset: 3px; }
+.order-item-price { margin-left: auto; font-variant-numeric: tabular-nums; }
+.order-card-foot { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); }
+.order-total { font-weight: 500; font-variant-numeric: tabular-nums; }
+.order-total .mono-xs { margin-right: var(--space-2); }
+@media (max-width: 560px) {
+  .order-card { padding: var(--space-4); }
+  .order-steps .mono-xs { font-size: 10px; }
+}
+
+/* ---- Invoice e-mail notice (SHOP-124) ---- */
+.invoice-email { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--ink-soft); }
+.invoice-email.is-sent::before { content: "✓ "; color: var(--lime-text); font-weight: 600; }
+.invoice-email.is-failed { color: var(--danger); }
+@media print { .invoice-email { display: none; } }

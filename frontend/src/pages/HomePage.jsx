@@ -1,5 +1,5 @@
-// Müşteri ana sayfası. Ürün listesi ve kategoriler başka subtask'larda
-// (SHOP-93/94/95, SHOP-100) eklenecek; şimdilik karşılama alanı.
+// Customer home page. Product lists and categories come from other subtasks
+// (SHOP-93/94/95, SHOP-100); for now this is the welcome section.
 export default function HomePage() {
   return (
     <section className="page">

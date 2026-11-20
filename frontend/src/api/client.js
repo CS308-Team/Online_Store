@@ -1,5 +1,5 @@
-// Backend'e yapılan bütün istekler buradan geçer.
-// Geliştirmede Vite proxy'si /api önekini FastAPI'ye yönlendirir (vite.config.js).
+// Every request to the backend goes through here.
+// During development the Vite proxy forwards the /api prefix to FastAPI (vite.config.js).
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
 export class ApiError extends Error {

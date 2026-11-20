@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { registerUser } from "../api/auth";
 import FormField from "../components/FormField";
 import VinylLoader from "../components/VinylLoader";
 import { mapServerErrors, validateRegister } from "../utils/validation";
 
-// SHOP-102 kayıt formu · SHOP-103 doğrulama ve hata mesajları · SHOP-104 API bağlantısı
+// SHOP-102 sign up form · SHOP-103 validation and error messages · SHOP-104 API connection
 const EMPTY = { name: "", taxId: "", email: "", homeAddress: "", password: "", passwordConfirm: "" };
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  // SHOP-118: keep the page to return to (e.g. /checkout) through sign up and login
+  const returnPath = useLocation().state?.from;
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -19,7 +21,7 @@ export default function RegisterPage() {
   const update = (field) => (e) => {
     const next = { ...values, [field]: e.target.value };
     setValues(next);
-    // Alan bir kere kontrol edildiyse yazarken hatayı canlı güncelle
+    // Once a field has been checked, update its error while the user types
     if (touched[field]) setErrors((prev) => ({ ...prev, [field]: validateRegister(next)[field] }));
   };
   const blur = (field) => () => {
@@ -47,7 +49,7 @@ export default function RegisterPage() {
         homeAddress: values.homeAddress.trim(),
         password: values.password,
       });
-      navigate("/login", { state: { registeredEmail: user.email } });
+      navigate("/login", { state: { registeredEmail: user.email, from: returnPath } });
     } catch (err) {
       setLoading(false);
       if (err.status === 409) {
@@ -89,7 +91,7 @@ export default function RegisterPage() {
         <button type="submit" className="btn btn-block">Sign up</button>
         <hr className="divider" />
         <span className="muted">Already have an account? </span>
-        <Link to="/login" className="link">Log in</Link>
+        <Link to="/login" state={returnPath ? { from: returnPath } : undefined} className="link">Log in</Link>
       </form>
     </section>
   );

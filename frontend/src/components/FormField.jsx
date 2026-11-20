@@ -1,5 +1,5 @@
-// Stil paketindeki .field / .input / .field-error yapısını tekrar tekrar
-// yazmamak için küçük bir sarmalayıcı.
+// Small wrapper around the style package's .field / .input / .field-error markup
+// so it is not repeated in every form.
 export default function FormField({ id, label, error, hint, as = "input", ...inputProps }) {
   const Tag = as;
   const className = (as === "textarea" ? "textarea" : "input") + (error ? " invalid" : "");

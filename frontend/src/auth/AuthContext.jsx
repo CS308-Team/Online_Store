@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { AuthContext } from "./context";
 import { decodeToken, isExpired } from "./token";
 
-// SHOP-108: Girişte JWT localStorage'a kaydedilir, çıkışta silinir.
-// Sayfa yenilense de oturum devam eder; süresi dolmuş token yüklenmez ve
-// süre dolduğu anda otomatik çıkış yapılır.
+// SHOP-108: The JWT is saved to localStorage on login and removed on logout.
+// The session survives a page refresh; an expired token is not loaded and the
+// user is logged out automatically when the token expires.
 const STORAGE_KEY = "kozalak.auth";
 
 function readStoredAuth() {
@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: next.token, role: next.role }));
     } catch {
-      /* depolama kapalıysa oturum sadece bu sekmede yaşar */
+      /* storage blocked: the session only lasts in this tab */
     }
     setAuth(next);
     return next;
@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
     setAuth(null);
   }, []);
 
-  // Token süresi dolunca otomatik çıkış
+  // Log out automatically when the token expires
   useEffect(() => {
     if (!auth?.exp) return;
     const ms = Math.max(0, auth.exp * 1000 - Date.now());
@@ -50,7 +50,7 @@ export function AuthProvider({ children }) {
     return () => clearTimeout(timer);
   }, [auth, logout]);
 
-  // Başka sekmede giriş/çıkış yapılırsa bu sekme de güncellensin
+  // Keep this tab in sync when the user logs in or out in another tab
   useEffect(() => {
     const onStorage = (e) => { if (e.key === STORAGE_KEY) setAuth(readStoredAuth()); };
     window.addEventListener("storage", onStorage);

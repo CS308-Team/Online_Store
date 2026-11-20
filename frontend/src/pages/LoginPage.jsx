@@ -2,24 +2,30 @@ import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { loginUser } from "../api/auth";
 import { useAuth } from "../auth/useAuth";
+import { isCheckoutPath, safeReturnPath } from "../auth/redirect";
 import { homePathFor } from "../auth/roles";
+import { mergeCartAfterLogin } from "../cart/mergeAfterLogin";
+import { useCart } from "../cart/useCart";
 import FormField from "../components/FormField";
 import VinylLoader from "../components/VinylLoader";
 import { validateLogin } from "../utils/validation";
 
-// SHOP-107 giriş formu · SHOP-108 JWT kaydı · SHOP-109 role göre yönlendirme
+// SHOP-107 login form · SHOP-108 save the JWT · SHOP-109 redirect by role
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { auth, login } = useAuth();
+  const cart = useCart();
   const registeredEmail = location.state?.registeredEmail;
+  // SHOP-118: the protected page the user tried to open (e.g. /checkout)
+  const returnPath = safeReturnPath(location.state?.from);
 
   const [values, setValues] = useState({ email: registeredEmail ?? "", password: "" });
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Zaten giriş yapmışsa formu gösterme, kendi ana sayfasına gönder
+  // Already logged in: skip the form and go to the user's home page
   if (auth && !loading) return <Navigate to={homePathFor(auth.role)} replace />;
 
   const update = (field) => (e) => {
@@ -41,7 +47,17 @@ export default function LoginPage() {
     try {
       const result = await loginUser({ email: values.email.trim(), password: values.password });
       const session = login(result);
-      navigate(homePathFor(session.role), { replace: true });
+      // Customers go back to the page they came from; staff go to their own home page
+      let target = session.role === "Customer" && returnPath ? returnPath : homePathFor(session.role);
+
+      // SHOP-117: send the guest cart to the account and show the merged cart
+      if (session.role === "Customer") {
+        const guestItems = cart.items;
+        const merge = await mergeCartAfterLogin(guestItems, session.token);
+        if (merge.status === "merged") cart.replaceItems(merge.items);
+        if (guestItems.length > 0 && !returnPath) target = "/cart";
+      }
+      navigate(target, { replace: true });
     } catch (err) {
       setLoading(false);
       setValues((prev) => ({ ...prev, password: "" }));
@@ -60,6 +76,9 @@ export default function LoginPage() {
         <span className="mono-xs">Welcome back</span>
         <h2 className="form-title">Log in</h2>
 
+        {isCheckoutPath(returnPath) && !registeredEmail && !formError && (
+          <p className="form-notice" role="status">Log in to continue to checkout. Your cart will be kept.</p>
+        )}
         {registeredEmail && !formError && (
           <p className="form-notice" role="status">Your account has been created. You can log in now.</p>
         )}
@@ -74,7 +93,7 @@ export default function LoginPage() {
         <button type="submit" className="btn btn-block">Log in</button>
         <hr className="divider" />
         <span className="muted">No account yet? </span>
-        <Link to="/register" className="link">Sign up</Link>
+        <Link to="/register" state={returnPath ? { from: returnPath } : undefined} className="link">Sign up</Link>
       </form>
     </section>
   );

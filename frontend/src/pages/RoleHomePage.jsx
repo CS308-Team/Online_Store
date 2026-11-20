@@ -1,9 +1,9 @@
 import { useAuth } from "../auth/useAuth";
 import { ROLE_LABEL } from "../auth/roles";
 
-// SHOP-109 için yönetici rollerinin geçici ana sayfası. İçerikleri ilgili
-// story'lerde (teslimat listesi, faturalar, yorum onayı…) doldurulacak.
-// Bu sayfaları başka rollerden korumak SHOP-111'in (route guard) işi.
+// Temporary home page for staff roles (SHOP-109). The content comes with the
+// related stories (delivery list, invoices, review approval…).
+// Protecting these pages from other roles is done by the route guard (SHOP-111).
 export default function RoleHomePage({ title, description }) {
   const { auth } = useAuth();
   return (
