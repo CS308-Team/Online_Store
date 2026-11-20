@@ -8,3 +8,5 @@ bcrypt
 pydantic[email]
 PyJWT
 python-dotenv
+reportlab
+aiosmtpd
