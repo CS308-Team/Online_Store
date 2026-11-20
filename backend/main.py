@@ -321,7 +321,22 @@ def me(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-
+# SHOP-91: müşteri kendi profilini görür (şifre asla dönmez)
+@app.get("/profile")
+def get_profile(current_user: dict = Depends(get_current_user)):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT name, email, home_address FROM users WHERE id = %s",
+                (current_user["id"],),
+            )
+            profile = cursor.fetchone()
+    finally:
+        connection.close()
+    if profile is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return profile
 # SHOP-81: rol kontrolünü denemek için örnek. Sadece Product Manager girebilir.
 @app.get("/product-manager/check")
 def product_manager_check(current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
