@@ -283,8 +283,9 @@ def me(current_user: dict = Depends(get_current_user)):
 def product_manager_check(current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
     return {"message": "Welcome, Product Manager", "user_id": current_user["id"]}
 
+# SHOP-84: only logged-in customers can pay
 @app.post("/payment")
-def pay(data: PaymentRequest):
+def pay(data: PaymentRequest, current_user: dict = Depends(get_current_user)):
     if is_card_expired(data.expiry_month, data.expiry_year):
         raise HTTPException(status_code=400, detail="Card has expired")
     if not mock_bank_approves(data.card_number):
@@ -348,3 +349,17 @@ def create_order(data: OrderRequest, current_user: dict = Depends(get_current_us
         connection.close()
 
     return {"order_id": order_id, "total_price": total, "status": "processing"}
+# SHOP-84: a customer only ever sees their own orders
+@app.get("/orders")
+def list_my_orders(current_user: dict = Depends(get_current_user)):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, total_price, status, delivery_address, created_at "
+                "FROM orders WHERE user_id = %s ORDER BY created_at DESC",
+                (current_user["id"],),
+            )
+            return cursor.fetchall()
+    finally:
+        connection.close()
