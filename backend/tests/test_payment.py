@@ -1,7 +1,8 @@
 from fastapi.testclient import TestClient
-from main import app
+from main import app, create_access_token
 
 client = TestClient(app)
+AUTH = {"Authorization": "Bearer " + create_access_token(1, "Customer")}
 def valid_card():
     return {
         "card_holder": "Zeynep Eker",
@@ -13,7 +14,7 @@ def valid_card():
 
 def test_payment_does_not_return_card_number_or_cvv():
 
-    response = client.post("/payment", json=valid_card())
+    response = client.post("/payment", json=valid_card(), headers=AUTH)
 
     assert response.status_code == 200
     body = response.json()
@@ -24,7 +25,7 @@ def test_payment_does_not_return_card_number_or_cvv():
 def test_declined_card_returns_402():
     card = valid_card()
     card["card_number"] = "4000000000000002"
-    response = client.post("/payment", json=card)
+    response = client.post("/payment", json=card, headers=AUTH)
     assert response.status_code == 402
 
 
@@ -32,12 +33,12 @@ def test_expired_card_returns_400():
     card = valid_card()
     card["expiry_month"] = 1
     card["expiry_year"] = 2026
-    response = client.post("/payment", json=card)
+    response = client.post("/payment", json=card, headers=AUTH)
     assert response.status_code == 400
 
 
 def test_card_number_with_letters_returns_422():
     card = valid_card()
     card["card_number"] = "4111abcd11111111"
-    response = client.post("/payment", json=card)
+    response = client.post("/payment", json=card, headers=AUTH)
     assert response.status_code == 422

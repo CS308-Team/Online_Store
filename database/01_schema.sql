@@ -34,6 +34,9 @@ CREATE TABLE users (
     FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
+-- SHOP-83: kullanıcıların sepeti
+
+
 CREATE TABLE orders (
     id               INT AUTO_INCREMENT PRIMARY KEY,
     user_id          INT            NOT NULL,
@@ -42,7 +45,7 @@ CREATE TABLE orders (
     card_last4       CHAR(4)        NOT NULL,
     delivery_address TEXT           NOT NULL,
     created_at       DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)  -- orders should be connected to user 
+    FOREIGN KEY (user_id) REFERENCES users(id)  -- orders should be connected to user
 );
 
 CREATE TABLE order_items (
@@ -51,18 +54,19 @@ CREATE TABLE order_items (
     product_id INT            NOT NULL,
     quantity   INT            NOT NULL,
     unit_price DECIMAL(10, 2) NOT NULL,
-    FOREIGN KEY (order_id)   REFERENCES orders(id), -- order items should be connected to oder 
-    FOREIGN KEY (product_id) REFERENCES products(id)  -- order items should be connected to product number
+    FOREIGN KEY (order_id)   REFERENCES orders(id),    -- order items should be connected to order
+    FOREIGN KEY (product_id) REFERENCES products(id)   -- order items should be connected to product
 );
 
+-- SHOP-83: kullanıcıların sepeti
 CREATE TABLE cart_items (
     id         INT AUTO_INCREMENT PRIMARY KEY,
     user_id    INT NOT NULL,
     product_id INT NOT NULL,
-    quantity   INT NOT NULL,
-    FOREIGN KEY (user_id)    REFERENCES users(id),
-    FOREIGN KEY (product_id) REFERENCES products(id),
-    UNIQUE (user_id, product_id)
+    quantity   INT NOT NULL CHECK (quantity > 0),
+    UNIQUE (user_id, product_id),
+    FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
 CREATE TABLE deliveries (
