@@ -51,6 +51,13 @@ function renderLogin() {
 }
 
 describe("normalizeCart", () => {
+  it("reads the backend's { cart, adjusted } answer", () => {
+    expect(normalizeCart({
+      cart: [{ product_id: 1, quantity: 2, name: "Classic Turntable", price: 249.99, quantity_in_stock: 5 }],
+      adjusted: [{ product_id: 1, requested: 7, added: 5 }],
+    })).toEqual([{ product_id: 1, quantity: 2 }]);
+    expect(normalizeCart({ cart: [], adjusted: [] })).toEqual([]);
+  });
   it("accepts a plain list or an { items } object", () => {
     expect(normalizeCart([{ product_id: 1, quantity: 2 }])).toEqual([{ product_id: 1, quantity: 2 }]);
     expect(normalizeCart({ items: [{ product_id: 3, quantity: 1 }] })).toEqual([{ product_id: 3, quantity: 1 }]);
@@ -65,9 +72,9 @@ describe("normalizeCart", () => {
       null,
     ])).toEqual([{ product_id: 1, quantity: 2 }, { product_id: 2, quantity: 3 }]);
   });
-  it("returns an empty cart for anything else", () => {
-    expect(normalizeCart(null)).toEqual([]);
-    expect(normalizeCart({ status: "ok" })).toEqual([]);
+  it("returns null for an answer without a cart, so the cart is not emptied", () => {
+    expect(normalizeCart(null)).toBeNull();
+    expect(normalizeCart({ status: "ok" })).toBeNull();
   });
 });
 
@@ -107,6 +114,27 @@ describe("login with a guest cart", () => {
     expect(savedCart()).toEqual([
       { product_id: 1, quantity: 3 }, { product_id: 2, quantity: 2 }, { product_id: 5, quantity: 1 },
     ]);
+  });
+
+  it("uses the cart from the backend's { cart, adjusted } answer", async () => {
+    saveCart([{ product_id: 1, quantity: 1 }]);
+    mockApi({ mergeReply: json(200, {
+      cart: [{ product_id: 1, quantity: 3, name: "Classic Turntable", price: 249.99, quantity_in_stock: 3 }],
+      adjusted: [{ product_id: 1, requested: 4, added: 3 }],
+    }) });
+    renderLogin();
+
+    expect(await screen.findByText("cart page")).toBeTruthy();
+    expect(savedCart()).toEqual([{ product_id: 1, quantity: 3 }]);
+  });
+
+  it("keeps the cart when the merge answer has an unknown shape", async () => {
+    saveCart([{ product_id: 1, quantity: 2 }]);
+    mockApi({ mergeReply: json(200, { status: "ok" }) });
+    renderLogin();
+
+    expect(await screen.findByText("cart page")).toBeTruthy();
+    expect(savedCart()).toEqual([{ product_id: 1, quantity: 2 }]);
   });
 
   it("keeps the cart on this device when the merge endpoint does not exist yet", async () => {

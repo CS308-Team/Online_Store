@@ -62,7 +62,7 @@ Tests: `__tests__/CartMerge.test.jsx`, `__tests__/CheckoutRedirect.test.jsx`, `_
 - **Ürün detayı:** `GET /products/{id}` kategori adını değil `category_id`'yi döndüğü için ad `GET /categories`'ten bulunuyor.
 - **Roles:** `Customer → /`, `Sales Manager → /sales`, `Product Manager → /product-manager`, `Support Agent → /support`. The role names must match `database/02_seed.sql`.
 - **Validation rules** match `RegisterRequest` in the backend (name 2–200, tax ID 10–11, address ≥5, password 8–72). The frontend also requires digits only in the tax ID and a repeated password.
-- **Cart merge (SHOP-117 → backend SHOP-213):** after a customer logs in the frontend sends `POST /cart/merge` with `{ "items": [{ "product_id", "quantity" }] }` and the login token. It expects the account's merged cart back, as a list or as `{ "items": [...] }`. Until the endpoint exists (404/405/501) the cart simply stays in the browser.
+- **Cart merge (SHOP-117 → backend SHOP-213):** after a customer logs in the frontend sends `POST /cart/merge` with `{ "items": [{ "product_id", "quantity" }] }` and the login token. The backend answers `{ "cart": [...], "adjusted": [...] }` and the browser cart is replaced with `cart`. If the endpoint is missing (404/405/501) or the answer has no cart list, the cart stays in the browser instead of being emptied.
 - **Checkout (SHOP-119/120):** sends `POST /orders` as defined in `OrderRequest`. Card rules match `PaymentRequest`: 16 digits, expiry month/year not in the past, 3 digit CVV, name on card 2–100. Messages are shown for 400 (expired card), 401 (login expired), 402 (declined), 404 (product gone), 409 (out of stock) and 422.
 
 ## Not covered by these tasks
