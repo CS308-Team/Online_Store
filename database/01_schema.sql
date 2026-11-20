@@ -68,3 +68,17 @@ CREATE TABLE cart_items (
     FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
+
+CREATE TABLE deliveries (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT NOT NULL,
+    order_id    INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity   INT NOT NULL,
+    total_price DECIMAL(10, 2) NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    address TEXT NOT NULL,
+    FOREIGN KEY (order_id)   REFERENCES orders(id),
+    FOREIGN KEY (user_id)    REFERENCES users(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
