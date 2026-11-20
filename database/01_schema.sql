@@ -33,9 +33,9 @@ CREATE TABLE users (
     role_id       INT          NOT NULL DEFAULT 1,
     FOREIGN KEY (role_id) REFERENCES roles(id)
 );
-<<<<<<< HEAD
+
 -- SHOP-83: kullanıcıların sepeti
-=======
+
 
 CREATE TABLE orders (
     id               INT AUTO_INCREMENT PRIMARY KEY,

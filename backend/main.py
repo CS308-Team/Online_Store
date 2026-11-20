@@ -110,7 +110,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials | None = Depends(
         raise HTTPException(status_code=401, detail="Invalid token",
                             headers={"WWW-Authenticate": "Bearer"})
     return {"id": int(payload["sub"]), "role": payload["role"]}
-<<<<<<< HEAD
+
 class CartItemRequest(BaseModel):
     product_id: int
     quantity: int = Field(ge=1)
@@ -152,9 +152,9 @@ def read_cart(cursor, user_id: int):
         (user_id,),
     )
     return cursor.fetchall()
-=======
 
->>>>>>> yasin/shop-84
+
+
 def require_role(*allowed_roles: str):
     """Endpoint'te kullanım: Depends(require_role(PRODUCT_MANAGER)). Rol uymuyorsa 403."""
     def checker(current_user: dict = Depends(get_current_user)):
@@ -326,7 +326,7 @@ def me(current_user: dict = Depends(get_current_user)):
 @app.get("/product-manager/check")
 def product_manager_check(current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
     return {"message": "Welcome, Product Manager", "user_id": current_user["id"]}
-<<<<<<< HEAD
+
 # SHOP-83: sepeti listele
 @app.get("/cart")
 def get_cart(current_user: dict = Depends(get_current_user)):
@@ -411,7 +411,9 @@ def merge_cart(data: CartMergeRequest, current_user: dict = Depends(get_current_
                     save_cart_quantity(cursor, current_user["id"], product_id, final)
             connection.commit()
             return {"cart": read_cart(cursor, current_user["id"]), "adjusted": adjusted}
-=======
+    finally:
+        connection.close()
+
 
 # SHOP-84: only logged-in customers can pay
 @app.post("/payment")
@@ -491,6 +493,6 @@ def list_my_orders(current_user: dict = Depends(get_current_user)):
                 (current_user["id"],),
             )
             return cursor.fetchall()
->>>>>>> yasin/shop-84
+
     finally:
         connection.close()
