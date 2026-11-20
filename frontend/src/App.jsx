@@ -10,6 +10,7 @@ import HomePage from "./pages/HomePage";
 import InvoicePage from "./pages/InvoicePage";
 import LoginPage from "./pages/LoginPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import OrderHistoryPage from "./pages/OrderHistoryPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/invoice/:orderId" element={<InvoicePage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/orders" element={<OrderHistoryPage />} />
           </Route>
           <Route element={<RoleRoute allowed={["Sales Manager"]} />}>
             <Route path="/sales" element={<RoleHomePage title="Sales dashboard"

@@ -59,7 +59,10 @@ export default function ProfilePage() {
         </dl>
       </div>
 
-      <Link to="/" className="link profile-back">Back to shop</Link>
+      <div className="profile-links">
+        <Link to="/orders" className="link">Your orders</Link>
+        <Link to="/" className="link">Back to shop</Link>
+      </div>
     </section>
   );
 }

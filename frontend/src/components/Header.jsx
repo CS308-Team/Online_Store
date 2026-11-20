@@ -44,7 +44,10 @@ export default function Header() {
                 <NavLink key={item.to} to={item.to} end={item.end} className="mono header-menu-link">{item.label}</NavLink>
               ))}
               {auth.role === "Customer"
-                ? <NavLink to="/profile" className="mono header-menu-link">Profile</NavLink>
+                ? <>
+                    <NavLink to="/orders" className="mono header-menu-link">Orders</NavLink>
+                    <NavLink to="/profile" className="mono header-menu-link">Profile</NavLink>
+                  </>
                 : <span className="mono-xs header-role">{ROLE_LABEL[auth.role] ?? auth.role}</span>}
               <button type="button" className="link" onClick={handleLogout}>Log out</button>
             </>
