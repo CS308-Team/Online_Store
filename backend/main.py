@@ -318,8 +318,9 @@ def create_order(data: OrderRequest, current_user: dict = Depends(get_current_us
                 raise HTTPException(status_code=409, detail="Not enough stock")
             prices[item.product_id] = product["price"]
             total += product["price"] * item.quantity
+            
 
-        cursor.execute(
+        cursor.execute(       
             "INSERT INTO orders (user_id, total_price, card_last4, delivery_address) "
             "VALUES (%s, %s, %s, %s)",
             (current_user["id"], total, data.payment.card_number[-4:], data.delivery_address),
@@ -327,6 +328,11 @@ def create_order(data: OrderRequest, current_user: dict = Depends(get_current_us
         order_id = cursor.lastrowid
 
         for item in data.items:
+            cursor.execute(
+                "INSERT INTO deliveries (order_id, user_id, product_id , quantity, total_price, address)"
+                "VALUES (%s, %s, %s, %s, %s, %s)",
+                (order_id, current_user["id"], item.product_id ,item.quantity , prices[item.product_id] * item.quantity ,data.delivery_address),    
+            )
             cursor.execute(
                 "INSERT INTO order_items (order_id, product_id, quantity, unit_price) "
                 "VALUES (%s, %s, %s, %s)",
@@ -348,3 +354,16 @@ def create_order(data: OrderRequest, current_user: dict = Depends(get_current_us
         connection.close()
 
     return {"order_id": order_id, "total_price": total, "status": "processing"}
+
+
+
+@app.get("/deliveries")
+def list_deliveries(current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM deliveries ORDER BY id")
+            deliveries = cursor.fetchall()
+    finally:
+        connection.close()
+    return deliveries
