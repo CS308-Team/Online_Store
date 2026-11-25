@@ -519,6 +519,53 @@ def list_my_orders(current_user: dict = Depends(get_current_user)):
         connection.close()
 
 
+# SHOP-150, SHOP-151 (story SHOP-88): invoice of one order, only for the customer who placed it.
+# Another customer's order answers 404 like a missing one, so order ids cannot be probed.
+@app.get("/orders/{order_id:int}/invoice")
+def get_invoice(order_id: int, current_user: dict = Depends(get_current_user)):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT orders.id, orders.created_at, orders.status, orders.total_price, "
+                "orders.card_last4, orders.delivery_address, "
+                "users.name, users.email, users.tax_id, users.home_address "
+                "FROM orders JOIN users ON orders.user_id = users.id "
+                "WHERE orders.id = %s AND orders.user_id = %s",
+                (order_id, current_user["id"]),
+            )
+            order = cursor.fetchone()
+            if order is None:
+                raise HTTPException(status_code=404, detail="Invoice not found")
+
+            cursor.execute(
+                "SELECT order_items.product_id, products.name AS product_name, "
+                "order_items.quantity, order_items.unit_price "
+                "FROM order_items JOIN products ON order_items.product_id = products.id "
+                "WHERE order_items.order_id = %s ORDER BY order_items.id",
+                (order_id,),
+            )
+            items = cursor.fetchall()
+    finally:
+        connection.close()
+
+    return {
+        "order_id": order["id"],
+        "created_at": order["created_at"],
+        "status": order["status"],
+        "total_price": order["total_price"],
+        "card_last4": order["card_last4"],
+        "delivery_address": order["delivery_address"],
+        "customer": {
+            "name": order["name"],
+            "email": order["email"],
+            "tax_id": order["tax_id"],
+            "home_address": order["home_address"],
+        },
+        "items": items,
+    }
+
+
 @app.get("/deliveries")
 def list_deliveries(current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
     connection = get_connection()
