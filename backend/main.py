@@ -27,6 +27,13 @@ CUSTOMER = "Customer"
 SALES_MANAGER = "Sales Manager"
 PRODUCT_MANAGER = "Product Manager"
 SUPPORT_AGENT = "Support Agent"
+# SHOP-156: an order moves processing -> in-transit -> delivered. Only these values are ever written.
+# The DB has no CHECK on orders.status, so an endpoint that changes the status must validate it:
+#     if new_status not in ORDER_STATUSES: raise HTTPException(status_code=400, ...)
+ORDER_PROCESSING = "processing"
+ORDER_IN_TRANSIT = "in-transit"
+ORDER_DELIVERED = "delivered"
+ORDER_STATUSES = (ORDER_PROCESSING, ORDER_IN_TRANSIT, ORDER_DELIVERED)
 app = FastAPI()
 
 
@@ -474,9 +481,10 @@ def create_order(data: OrderRequest, current_user: dict = Depends(get_current_us
             
 
         cursor.execute(       
-            "INSERT INTO orders (user_id, total_price, card_last4, delivery_address) "
-            "VALUES (%s, %s, %s, %s)",
-            (current_user["id"], total, data.payment.card_number[-4:], data.delivery_address),
+            "INSERT INTO orders (user_id, total_price, status, card_last4, delivery_address) "
+            "VALUES (%s, %s, %s, %s, %s)",
+            (current_user["id"], total, ORDER_PROCESSING, data.payment.card_number[-4:],
+             data.delivery_address),
         )
         order_id = cursor.lastrowid
 
@@ -508,22 +516,43 @@ def create_order(data: OrderRequest, current_user: dict = Depends(get_current_us
 
     # SHOP-155: runs after the commit, so a failed e-mail cannot cancel the order
     email_sent = email_invoice(order_id, current_user["id"])
-    return {"order_id": order_id, "total_price": total, "status": "processing", "email_sent": email_sent}
-# SHOP-84: a customer only ever sees their own orders
+    return {"order_id": order_id, "total_price": total, "status": ORDER_PROCESSING, "email_sent": email_sent}
+# SHOP-84, SHOP-157 (story SHOP-90): a customer only ever sees their own orders, newest first.
+# Same field names as the invoice, so the order history page and the invoice page share one shape.
 @app.get("/orders")
 def list_my_orders(current_user: dict = Depends(get_current_user)):
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
+            # id DESC breaks ties: two orders placed in the same second still come newest first
             cursor.execute(
-                "SELECT id, total_price, status, delivery_address, created_at "
-                "FROM orders WHERE user_id = %s ORDER BY created_at DESC",
+                "SELECT id AS order_id, created_at, status, total_price, delivery_address "
+                "FROM orders WHERE user_id = %s ORDER BY created_at DESC, id DESC",
                 (current_user["id"],),
             )
-            return cursor.fetchall()
+            orders = cursor.fetchall()
 
+            # One query for the items of all orders, instead of one query per order
+            cursor.execute(
+                "SELECT order_items.order_id, order_items.product_id, products.name AS product_name, "
+                "order_items.quantity, order_items.unit_price "
+                "FROM order_items "
+                "JOIN orders ON order_items.order_id = orders.id "
+                "JOIN products ON order_items.product_id = products.id "
+                "WHERE orders.user_id = %s ORDER BY order_items.id",
+                (current_user["id"],),
+            )
+            items = cursor.fetchall()
     finally:
         connection.close()
+
+    items_by_order = {}
+    for item in items:
+        order_id = item.pop("order_id")
+        items_by_order.setdefault(order_id, []).append(item)
+    for order in orders:
+        order["items"] = items_by_order.get(order["order_id"], [])
+    return orders
 
 
 def read_invoice(cursor, order_id: int, user_id: int) -> dict | None:
