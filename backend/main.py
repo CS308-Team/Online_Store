@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, HTTPException
@@ -10,7 +11,11 @@ from pydantic import BaseModel, EmailStr, Field
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from invoice_mail import build_invoice_pdf, send_invoice_email
+
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 JWT_SECRET = os.getenv("JWT_SECRET")
 if not JWT_SECRET:
@@ -501,7 +506,9 @@ def create_order(data: OrderRequest, current_user: dict = Depends(get_current_us
     finally:
         connection.close()
 
-    return {"order_id": order_id, "total_price": total, "status": "processing"}
+    # SHOP-155: runs after the commit, so a failed e-mail cannot cancel the order
+    email_sent = email_invoice(order_id, current_user["id"])
+    return {"order_id": order_id, "total_price": total, "status": "processing", "email_sent": email_sent}
 # SHOP-84: a customer only ever sees their own orders
 @app.get("/orders")
 def list_my_orders(current_user: dict = Depends(get_current_user)):
@@ -519,35 +526,28 @@ def list_my_orders(current_user: dict = Depends(get_current_user)):
         connection.close()
 
 
-# SHOP-150, SHOP-151 (story SHOP-88): invoice of one order, only for the customer who placed it.
-# Another customer's order answers 404 like a missing one, so order ids cannot be probed.
-@app.get("/orders/{order_id:int}/invoice")
-def get_invoice(order_id: int, current_user: dict = Depends(get_current_user)):
-    connection = get_connection()
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT orders.id, orders.created_at, orders.status, orders.total_price, "
-                "orders.card_last4, orders.delivery_address, "
-                "users.name, users.email, users.tax_id, users.home_address "
-                "FROM orders JOIN users ON orders.user_id = users.id "
-                "WHERE orders.id = %s AND orders.user_id = %s",
-                (order_id, current_user["id"]),
-            )
-            order = cursor.fetchone()
-            if order is None:
-                raise HTTPException(status_code=404, detail="Invoice not found")
+def read_invoice(cursor, order_id: int, user_id: int) -> dict | None:
+    """Invoice of one order if it belongs to user_id, otherwise None. Used by the endpoint and the e-mail."""
+    cursor.execute(
+        "SELECT orders.id, orders.created_at, orders.status, orders.total_price, "
+        "orders.card_last4, orders.delivery_address, orders.email_sent, "
+        "users.name, users.email, users.tax_id, users.home_address "
+        "FROM orders JOIN users ON orders.user_id = users.id "
+        "WHERE orders.id = %s AND orders.user_id = %s",
+        (order_id, user_id),
+    )
+    order = cursor.fetchone()
+    if order is None:
+        return None
 
-            cursor.execute(
-                "SELECT order_items.product_id, products.name AS product_name, "
-                "order_items.quantity, order_items.unit_price "
-                "FROM order_items JOIN products ON order_items.product_id = products.id "
-                "WHERE order_items.order_id = %s ORDER BY order_items.id",
-                (order_id,),
-            )
-            items = cursor.fetchall()
-    finally:
-        connection.close()
+    cursor.execute(
+        "SELECT order_items.product_id, products.name AS product_name, "
+        "order_items.quantity, order_items.unit_price "
+        "FROM order_items JOIN products ON order_items.product_id = products.id "
+        "WHERE order_items.order_id = %s ORDER BY order_items.id",
+        (order_id,),
+    )
+    items = cursor.fetchall()
 
     return {
         "order_id": order["id"],
@@ -563,7 +563,45 @@ def get_invoice(order_id: int, current_user: dict = Depends(get_current_user)):
             "home_address": order["home_address"],
         },
         "items": items,
+        "email_sent": bool(order["email_sent"]),  # SHOP-89: shown by the frontend's e-mail notice
     }
+
+
+# SHOP-150, SHOP-151 (story SHOP-88): invoice of one order, only for the customer who placed it.
+# Another customer's order answers 404 like a missing one, so order ids cannot be probed.
+@app.get("/orders/{order_id:int}/invoice")
+def get_invoice(order_id: int, current_user: dict = Depends(get_current_user)):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            invoice = read_invoice(cursor, order_id, current_user["id"])
+    finally:
+        connection.close()
+
+    if invoice is None:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    return invoice
+
+
+# SHOP-152, SHOP-153, SHOP-155 (story SHOP-89): build the PDF and e-mail it after the order is saved.
+# Never raises: the order is already committed, so an e-mail problem must not turn it into an error.
+def email_invoice(order_id: int, user_id: int) -> bool:
+    try:
+        connection = get_connection()
+        try:
+            with connection.cursor() as cursor:
+                invoice = read_invoice(cursor, order_id, user_id)
+                if invoice is None:
+                    return False
+                send_invoice_email(invoice, build_invoice_pdf(invoice))
+                cursor.execute("UPDATE orders SET email_sent = TRUE WHERE id = %s", (order_id,))
+            connection.commit()
+        finally:
+            connection.close()
+        return True
+    except Exception:
+        logger.exception("Invoice e-mail for order %s failed; the order is kept", order_id)
+        return False
 
 
 @app.get("/deliveries")

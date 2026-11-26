@@ -45,6 +45,7 @@ CREATE TABLE orders (
     card_last4       CHAR(4)        NOT NULL,
     delivery_address TEXT           NOT NULL,
     created_at       DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    email_sent       BOOLEAN        NOT NULL DEFAULT FALSE,  -- SHOP-89: was the invoice PDF e-mailed?
     FOREIGN KEY (user_id) REFERENCES users(id)  -- orders should be connected to user
 );
 

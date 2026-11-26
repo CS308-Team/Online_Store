@@ -20,6 +20,7 @@ ORDER_ROW = {
     "email": "customer@example.com",
     "tax_id": "1111111111",
     "home_address": "Tuzla, Istanbul",
+    "email_sent": 1,  # MySQL BOOLEAN comes back as 0/1
 }
 
 ITEM_ROWS = [
@@ -98,6 +99,7 @@ def test_invoice_returns_order_customer_items_and_total(monkeypatch):
             {"product_id": 3, "product_name": "Kind of Blue", "quantity": 2, "unit_price": 34.99},
             {"product_id": 4, "product_name": "The Dark Side of the Moon", "quantity": 1, "unit_price": 39.99},
         ],
+        "email_sent": True,
     }
 
 
