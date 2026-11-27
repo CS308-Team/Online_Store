@@ -67,6 +67,15 @@ class OrderRequest(BaseModel):
     delivery_address: str = Field(min_length=5)
     payment: PaymentRequest
 
+class OrderStatusUpdate(BaseModel):
+    status : str = Field(pattern=r"^(processing|in-transit|delivered)$") #^ means that starting from the beginning , $to the end 
+    #FASTAPI would return 422 error if the status is different than one of these 
+
+class StockQuantity(BaseModel):
+    stock : int = Field(ge=0)
+
+NEXT_STATUS = {"processing":"in-transit", "in-transit":"delivered"}
+
 def get_connection():
     return pymysql.connect(
         host="localhost",
@@ -556,13 +565,6 @@ def list_my_orders(current_user: dict = Depends(get_current_user)):
         order["items"] = items_by_order.get(order["order_id"], [])
     return orders
 
-
-class OrderStatusUpdate(BaseModel):
-    status : str = Field(pattern=r"^(processing|in-transit|delivered)$") #^ means that starting from the beginning , $to the end 
-    #FASTAPI would return 422 error if the status is different than one of these 
-
-NEXT_STATUS = {"processing":"in-transit", "in-transit":"delivered"}
-
 @app.patch("/orders/{order_id:int}/status")
 def change_status(order_id : int,  status_data : OrderStatusUpdate, current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
     connection = get_connection()
@@ -682,3 +684,20 @@ def list_deliveries(status: str| None = None , current_user: dict = Depends(requ
     finally:
         connection.close()
     return deliveries
+
+@app.patch("/products/{product_id:int}/stock")
+def stock_update(product_id:int, stock_data : StockQuantity ,current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT quantity_in_stock FROM products WHERE products.id = %s FOR UPDATE" , (product_id,))
+            products = cursor.fetchone()
+
+            if products is None:
+                raise HTTPException(status_code = 404 , detail= "Product not found")
+
+            cursor.execute( "UPDATE products SET quantity_in_stock = %s WHERE id = %s", (stock_data.stock, product_id),)
+            connection.commit()
+            return {"product_id": product_id, "old_stock": products["quantity_in_stock"], "new_stock": stock_data.stock}
+    finally:
+        connection.close()
