@@ -67,6 +67,15 @@ class OrderRequest(BaseModel):
     delivery_address: str = Field(min_length=5)
     payment: PaymentRequest
 
+class OrderStatusUpdate(BaseModel):
+    status : str = Field(pattern=r"^(processing|in-transit|delivered)$") #^ means that starting from the beginning , $to the end 
+    #FASTAPI would return 422 error if the status is different than one of these 
+
+class StockQuantity(BaseModel):
+    stock : int = Field(ge=0)
+
+NEXT_STATUS = {"processing":"in-transit", "in-transit":"delivered"}
+
 def get_connection():
     return pymysql.connect(
         host="localhost",
@@ -288,6 +297,8 @@ def register(data: RegisterRequest):
 
     # (g) Şifreyi veya hash'i asla geri gönderme
     return {"id": user_id, "name": data.name, "email": email}
+
+
 @app.post("/login")
 def login(data: LoginRequest):
     email = data.email.lower()        # register'da da küçük harfle kaydediyoruz
@@ -554,6 +565,29 @@ def list_my_orders(current_user: dict = Depends(get_current_user)):
         order["items"] = items_by_order.get(order["order_id"], [])
     return orders
 
+@app.patch("/orders/{order_id:int}/status")
+def change_status(order_id : int,  status_data : OrderStatusUpdate, current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT status FROM orders WHERE orders.id = %s FOR UPDATE", (order_id,)) # FOR UPDATE to avoide crashed if 2 manager press the same button at the same time
+            order_stat = cursor.fetchone()
+            if order_stat is None:
+                raise HTTPException(status_code = 404 , detail= "Order not found")
+            checker = False
+            for key, value in NEXT_STATUS.items():
+                if status_data.status == value and order_stat["status"] == key:
+                    checker = True
+            if checker == False:
+                raise HTTPException(status_code = 400 , detail= "Transition is not possible")
+            cursor.execute("UPDATE orders SET status = %s WHERE orders.id = %s ", (status_data.status,order_id))
+            if status_data.status == "delivered":
+                cursor.execute("UPDATE orders SET delivered_at = NOW() WHERE orders.id = %s ", (order_id,))
+                cursor.execute("UPDATE deliveries SET completed = TRUE WHERE deliveries.order_id = %s", (order_id,))
+            connection.commit()
+    finally:
+        connection.close()
+    return {"old_status": order_stat["status"], "new_status": status_data.status}
 
 def read_invoice(cursor, order_id: int, user_id: int) -> dict | None:
     """Invoice of one order if it belongs to user_id, otherwise None. Used by the endpoint and the e-mail."""
@@ -634,12 +668,36 @@ def email_invoice(order_id: int, user_id: int) -> bool:
 
 
 @app.get("/deliveries")
-def list_deliveries(current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
+def list_deliveries(status: str| None = None , current_user: dict = Depends(require_role(PRODUCT_MANAGER))): # None = None shows the default 
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM deliveries ORDER BY id")
-            deliveries = cursor.fetchall()
+            if status is None:
+                cursor.execute("SELECT d.*, o.status FROM deliveries d LEFT JOIN orders o ON d.order_id = o.id " \
+                "ORDER BY d.id ")
+                deliveries = cursor.fetchall()
+            else:
+                cursor.execute("SELECT d.*, o.status FROM deliveries d LEFT JOIN orders o ON d.order_id = o.id " \
+                "WHERE o.status = %s ORDER BY d.id ", (status,))
+                deliveries = cursor.fetchall()
+
     finally:
         connection.close()
     return deliveries
+
+@app.patch("/products/{product_id:int}/stock")
+def stock_update(product_id:int, stock_data : StockQuantity ,current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT quantity_in_stock FROM products WHERE products.id = %s FOR UPDATE" , (product_id,))
+            products = cursor.fetchone()
+
+            if products is None:
+                raise HTTPException(status_code = 404 , detail= "Product not found")
+
+            cursor.execute( "UPDATE products SET quantity_in_stock = %s WHERE id = %s", (stock_data.stock, product_id),)
+            connection.commit()
+            return {"product_id": product_id, "old_stock": products["quantity_in_stock"], "new_stock": stock_data.stock}
+    finally:
+        connection.close()
