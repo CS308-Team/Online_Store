@@ -666,12 +666,19 @@ def email_invoice(order_id: int, user_id: int) -> bool:
 
 
 @app.get("/deliveries")
-def list_deliveries(current_user: dict = Depends(require_role(PRODUCT_MANAGER))):
+def list_deliveries(status: str| None = None , current_user: dict = Depends(require_role(PRODUCT_MANAGER))): # None = None shows the default 
     connection = get_connection()
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM deliveries ORDER BY id")
-            deliveries = cursor.fetchall()
+            if status is None:
+                cursor.execute("SELECT d.*, o.status FROM deliveries d LEFT JOIN orders o ON d.order_id = o.id " \
+                "ORDER BY d.id ")
+                deliveries = cursor.fetchall()
+            else:
+                cursor.execute("SELECT d.*, o.status FROM deliveries d LEFT JOIN orders o ON d.order_id = o.id " \
+                "WHERE o.status = %s ORDER BY d.id ", (status,))
+                deliveries = cursor.fetchall()
+
     finally:
         connection.close()
     return deliveries
