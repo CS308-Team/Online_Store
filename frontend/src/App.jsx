@@ -1,0 +1,58 @@
+import { Route, Routes } from "react-router-dom";
+import RoleRoute from "./auth/RoleRoute";
+import Header from "./components/Header";
+import CartPage from "./pages/CartPage";
+import CategoryPage from "./pages/CategoryPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import DeliveryListPage from "./pages/DeliveryListPage";
+import ForbiddenPage from "./pages/ForbiddenPage";
+import HomePage from "./pages/HomePage";
+import InvoicePage from "./pages/InvoicePage";
+import LoginPage from "./pages/LoginPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import OrderHistoryPage from "./pages/OrderHistoryPage";
+import ProfilePage from "./pages/ProfilePage";
+import ProductDetailPage from "./pages/ProductDetailPage";
+import RegisterPage from "./pages/RegisterPage";
+import RoleHomePage from "./pages/RoleHomePage";
+import SearchPage from "./pages/SearchPage";
+
+export default function App() {
+  return (
+    <>
+      <Header />
+      <main>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/products/:id" element={<ProductDetailPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/category/:name" element={<CategoryPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/forbidden" element={<ForbiddenPage />} />
+          <Route element={<RoleRoute allowed={["Customer"]} />}>
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/invoice/:orderId" element={<InvoicePage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/orders" element={<OrderHistoryPage />} />
+          </Route>
+          <Route element={<RoleRoute allowed={["Sales Manager"]} />}>
+            <Route path="/sales" element={<RoleHomePage title="Sales dashboard"
+              description="Prices, discounts and invoices will appear here." />} />
+          </Route>
+          <Route element={<RoleRoute allowed={["Product Manager"]} />}>
+            <Route path="/product-manager" element={<RoleHomePage title="Product dashboard"
+              description="Stock, the delivery list and review approvals will appear here." />} />
+            <Route path="/product-manager/deliveries" element={<DeliveryListPage />} />
+          </Route>
+          <Route element={<RoleRoute allowed={["Support Agent"]} />}>
+            <Route path="/support" element={<RoleHomePage title="Support dashboard"
+              description="Customer support requests will appear here." />} />
+          </Route>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </main>
+    </>
+  );
+}
